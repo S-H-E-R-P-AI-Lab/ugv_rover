@@ -26,6 +26,8 @@ match ugv_gazebo (see docs/SIMULATOR.md).
 """
 
 import os
+import re
+import subprocess
 import tempfile
 
 from ament_index_python.packages import get_package_share_directory
@@ -33,7 +35,7 @@ from launch import LaunchDescription
 from launch.actions import (DeclareLaunchArgument, EmitEvent, LogInfo, OpaqueFunction,
                             RegisterEventHandler)
 from launch.conditions import IfCondition
-from launch.event_handlers import OnProcessExit
+from launch.event_handlers import OnProcessExit, OnShutdown
 from launch.events import Shutdown
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
@@ -61,6 +63,13 @@ def rviz_config_path(name):
     }
     package, filename = choices.get(name, choices['description'])
     return os.path.join(get_package_share_directory(package), 'rviz', filename)
+
+
+def stop_driver(urdf_file):
+    """Send SIGTERM to the driver of this launch (matched by its unique URDF path)."""
+    pattern = 'webots_ros2_driver/driver .*' + re.escape(urdf_file)
+    subprocess.run(['pkill', '-TERM', '-f', pattern], check=False)
+    return []
 
 
 def launch_setup(context, *args, **kwargs):
@@ -169,6 +178,11 @@ def launch_setup(context, *args, **kwargs):
         # Stop everything when Webots is closed.
         RegisterEventHandler(
             OnProcessExit(target_action=webots, on_exit=[EmitEvent(event=Shutdown())])),
+        # webots-controller starts the driver as a child and does not pass signals on, so
+        # without this the driver outlives any shutdown that does not come from Ctrl+C in a
+        # terminal (closing Webots, launch_testing, kill -INT), spinning on a lost connection.
+        RegisterEventHandler(OnShutdown(on_shutdown=[
+            OpaqueFunction(function=lambda context: stop_driver(urdf_file))])),
     ]
     return actions
 
