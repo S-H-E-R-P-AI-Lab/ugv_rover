@@ -21,6 +21,17 @@ LOCAL_PLANNERS = {'dwa': 'dwa.yaml', 'teb': 'teb.yaml', 'rpp': 'rpp.yaml', 'mppi
 
 
 def launch_setup(context, *args, **kwargs):
+    # Cartographer and slam_toolbox localization need a saved state; the package only
+    # ships the occupancy grid (maps/apartment.yaml) for AMCL and EMCL.
+    state = {'cartographer': 'pbstream', 'slam_toolbox': 'posegraph'}.get(
+        context.launch_configurations['use_localization'])
+    if state:
+        path = context.launch_configurations[state]
+        if not os.path.exists(path if state == 'pbstream' else path + '.posegraph'):
+            raise RuntimeError(
+                f'use_localization:={context.launch_configurations["use_localization"]} needs '
+                f'{state}:=<file>, {path} does not exist. Make one by mapping with the matching '
+                'wrapper (cartographer.launch.py or slam_toolbox.launch.py) and saving its state.')
     use_localplan = context.launch_configurations['use_localplan']
     params = share('ugv_nav', 'params', LOCAL_PLANNERS.get(use_localplan, 'dwa.yaml'))
     rviz = 'nav_3d' if context.launch_configurations['use_localization'] == 'rtabmap' else 'nav_2d'
