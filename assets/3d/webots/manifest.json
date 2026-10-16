@@ -53,13 +53,13 @@
    "triangles": {
     "anodized": 9612,
     "plastic": 8388,
-    "steel": 4151,
+    "steel": 4152,
     "gold": 501,
     "lens": 615,
     "led": 188,
     "pcb": 537
    },
-   "cad_triangles_after_culling": 206823
+   "cad_triangles_after_culling": 206885
   },
   "base_lidar_link": {
    "file": "base_lidar_link.dae",
@@ -67,9 +67,9 @@
     "plastic"
    ],
    "triangles": {
-    "plastic": 2500
+    "plastic": 3341
    },
-   "cad_triangles_after_culling": 18854
+   "cad_triangles_after_culling": 20089
   },
   "oak_base": {
    "file": "oak_base.dae",
