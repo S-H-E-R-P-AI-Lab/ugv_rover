@@ -1,0 +1,66 @@
+#VRML_SIM R2025a utf8
+# UGV Rover empty arena: a 6 m x 6 m walled floor with a few boxes for the lidar.
+# Used for drive tuning, odometry checks and quick sensor tests.
+
+# Wheel contact: ContactProperties material1 "ugv_wheel", coulombFriction [0.3, 1.0, 1.0]:
+# the wheel is asymmetric (0.3 across the wheel, 1.0 along the rolling direction, order found
+# by measurement), the floor symmetric (1.0). The low lateral value stands in for the real six
+# wheel chassis whose middle wheels barely scrub. See docs/SIMULATOR.md.
+# Note: Webots hangs while loading if a comment is placed inside a node, keep comments up here.
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/containers/protos/WoodenBox.proto"
+EXTERNPROTO "../protos/UgvRover.proto"
+
+WorldInfo {
+  info [
+    "Waveshare UGV Rover, empty arena"
+  ]
+  title "UGV Rover empty arena"
+  basicTimeStep 10
+  contactProperties [
+    ContactProperties {
+      material1 "ugv_wheel"
+      coulombFriction [
+        0.3, 1.0, 1.0
+      ]
+      bounce 0
+      softCFM 1e-05
+    }
+  ]
+}
+Viewpoint {
+  orientation -0.3 0.3 0.9 1.9
+  position 1.2 -3.2 2.6
+  follow "ugv_rover"
+  followType "Pan and Tilt Shot"
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+  floorSize 6 6
+  floorTileSize 1 1
+  wallHeight 0.4
+}
+WoodenBox {
+  translation 1.5 0 0.15
+  name "box ahead"
+  size 0.3 0.3 0.3
+}
+WoodenBox {
+  translation 0 1.2 0.15
+  name "box left"
+  size 0.6 0.3 0.3
+}
+WoodenBox {
+  translation -1.8 -1.5 0.25
+  name "box back right"
+  size 0.5 0.5 0.5
+}
+UgvRover {
+  translation 0 0 0
+  name "ugv_rover"
+}
