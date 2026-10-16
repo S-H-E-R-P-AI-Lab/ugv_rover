@@ -1,0 +1,62 @@
+name: ROS workspace
+description: >
+  Install ROS 2 Humble and every dependency with scripts/setup_ubuntu.sh (so CI also tests
+  the setup script on a fresh Ubuntu 22.04), then build the workspace with ccache.
+  Expects the repository checked out at the workspace root.
+
+inputs:
+  colcon-args:
+    description: Extra colcon build arguments, for example "--packages-up-to ugv_webots".
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Install ROS 2 Humble and the workspace dependencies
+      shell: bash
+      run: bash scripts/setup_ubuntu.sh --no-build --no-upgrade --no-lfs
+
+    - name: Check that rosdep resolves every dependency
+      shell: bash
+      # cmake_modules is a ROS 1 key from rf2o_laser_odometry, harmless (docs/TROUBLESHOOTING.md).
+      run: |
+        rosdep install --from-paths src --ignore-src -y --rosdistro humble \
+          --skip-keys cmake_modules
+
+    - name: Install ccache
+      shell: bash
+      run: sudo apt-get install -y -qq ccache
+
+    # The key changes with any package.xml or CMakeLists.txt, so dependency or build
+    # configuration changes start from an empty cache. Within one configuration the cache
+    # is updated on every run (the commit is part of the key).
+    - name: Restore the ccache
+      id: ccache
+      uses: actions/cache/restore@v6
+      with:
+        path: ~/.cache/ccache
+        key: ccache-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/**/package.xml', 'src/**/CMakeLists.txt') }}-${{ github.job }}-${{ github.sha }}
+        restore-keys: |
+          ccache-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/**/package.xml', 'src/**/CMakeLists.txt') }}-
+
+    - name: Build the workspace
+      shell: bash
+      env:
+        CCACHE_BASEDIR: ${{ github.workspace }}
+        CCACHE_MAXSIZE: 2G
+      run: |
+        export CCACHE_DIR="$HOME/.cache/ccache"
+        ccache --zero-stats >/dev/null
+        source /opt/ros/humble/setup.bash
+        colcon build --event-handlers console_cohesion+ ${{ inputs.colcon-args }} \
+          --cmake-args -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+        ccache --show-stats
+
+    - name: Save the ccache
+      if: always() && steps.ccache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: ~/.cache/ccache
+        key: ${{ steps.ccache.outputs.cache-primary-key }}

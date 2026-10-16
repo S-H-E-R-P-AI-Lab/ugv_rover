@@ -1,0 +1,66 @@
+# Required check on pull requests to main. Builds the whole workspace on a fresh
+# Ubuntu 22.04 (through scripts/setup_ubuntu.sh) and runs the tests of our own packages.
+# See docs/CI.md.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  UGV_MODEL: ugv_rover
+  LDLIDAR_MODEL: ld19
+  # Packages we wrote and lint. Upstream and vendored packages are built but not linted.
+  OWN_PACKAGES: ugv_webots
+
+jobs:
+  build-test:
+    name: Build and test
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - name: Check out (without the Git LFS model files)
+        uses: actions/checkout@v7
+        with:
+          lfs: false
+
+      - name: Lint shell scripts
+        run: shellcheck -S warning scripts/*.sh
+
+      - name: Install dependencies and build
+        uses: ./.github/actions/ros-workspace
+
+      - name: Confirm the build did not need the LFS model files
+        run: |
+          pointers=$(git lfs ls-files -n | while read -r f; do
+            head -c 100 "$f" | grep -q 'git-lfs.github.com/spec' && echo "$f"; done | wc -l)
+          echo "$pointers of $(git lfs ls-files -n | wc -l) LFS files are pointers in this build"
+
+      - name: Test our packages
+        run: |
+          source install/setup.bash
+          read -ra packages <<< "$OWN_PACKAGES"
+          colcon test --packages-select "${packages[@]}" --event-handlers console_cohesion+
+          colcon test-result --verbose
+
+      - name: Upload logs and test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ci-logs
+          path: |
+            log/
+            build/*/pytest.xml
+            build/*/test_results/
+          if-no-files-found: ignore
+          retention-days: 14
