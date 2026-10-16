@@ -13,6 +13,20 @@ inputs:
 runs:
   using: composite
   steps:
+    # The x64 runner image ships LLVM's libunwind-NN-dev (with Clang), which conflicts with
+    # Ubuntu's libunwind-dev that libgoogle-glog-dev (Cartographer) needs. A normal Ubuntu
+    # install does not have them, so this stays here rather than in the setup script.
+    - name: Remove the runner's conflicting libunwind packages
+      shell: bash
+      run: |
+        conflicting=$(dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' 'libunwind-*' \
+          | awk '$1 == "ii" && $2 ~ /^libunwind-[0-9]+-dev$/ {print $2}')
+        if [ -n "$conflicting" ]; then
+          echo "Removing: $conflicting"
+          # shellcheck disable=SC2086
+          sudo apt-get remove -y -qq $conflicting
+        fi
+
     - name: Install ROS 2 Humble and the workspace dependencies
       shell: bash
       run: bash scripts/setup_ubuntu.sh --no-build --no-upgrade --no-lfs
@@ -55,7 +69,7 @@ runs:
         ccache --show-stats
 
     - name: Save the ccache
-      if: always() && steps.ccache.outputs.cache-hit != 'true'
+      if: always() && steps.ccache.outcome == 'success' && steps.ccache.outputs.cache-hit != 'true'
       uses: actions/cache/save@v6
       with:
         path: ~/.cache/ccache
