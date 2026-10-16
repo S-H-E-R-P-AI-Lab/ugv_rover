@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-WS=/home/ws/ugv_ws
+WS="${UGV_WS:-/home/ws/ugv_ws}"
 BASHRC=~/.bashrc
 APT_PREFS=/etc/apt/preferences.d/block-gazebo-classic
 
@@ -286,7 +286,9 @@ sudo apt-get install -y \
     ros-humble-depthai-examples \
     ros-humble-depthai \
     ros-humble-depthai-filters \
-    ros-humble-depthai-ros
+    ros-humble-depthai-ros \
+    ros-humble-webots-ros2 \
+    ros-humble-depth-image-proc
 
 # ---------- Gazebo ----------
 echo
@@ -476,6 +478,10 @@ UGV_PKGS=(
   ugv_voice
   ugv_web_app
 )
+
+if dpkg -s ros-humble-webots-ros2 >/dev/null 2>&1; then
+  UGV_PKGS+=(ugv_webots)
+fi
 
 if [ "$GAZEBO_INSTALLED" = true ]; then
   UGV_PKGS+=(ugv_gazebo)
