@@ -5,6 +5,6 @@
 ## Checklist
 
 - [ ] Builds locally (`colcon build`), and `colcon test --packages-select ugv_webots` passes
-- [ ] Tested in the simulator (say how, or why it does not apply); add the `run-sim` label for the CI sim test
+- [ ] Tested in the simulator (say how, or why it does not apply); the sim smoke test runs locally, not in CI
 - [ ] Docs updated if behavior, topics, launch arguments or setup steps changed
 - [ ] Upstream files changed? Listed in `docs/UPSTREAM_CHANGES.md`
