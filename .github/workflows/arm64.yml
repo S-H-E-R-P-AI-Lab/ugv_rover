@@ -12,10 +12,6 @@ on:
     branches: [main]
     types: [labeled, opened, synchronize, reopened]
 
-concurrency:
-  group: arm64-${{ github.head_ref || github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
 
@@ -33,6 +29,10 @@ jobs:
       (github.event.action != 'labeled' &&
        contains(github.event.pull_request.labels.*.name, 'run-arm64'))
     runs-on: ubuntu-22.04-arm
+    # Job level, so a run skipped by the label check never cancels a running one.
+    concurrency:
+      group: arm64-${{ github.head_ref || github.ref }}
+      cancel-in-progress: true
     timeout-minutes: 120
     steps:
       - name: Check out (without the Git LFS model files)
