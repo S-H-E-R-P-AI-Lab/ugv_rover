@@ -171,7 +171,7 @@ GROUP_SHIFT = {
 # Triangle budget per output mesh (the wheel mesh is drawn six times).
 BUDGET = {
     'base_link': 24000,
-    'base_lidar_link': 2500,
+    'base_lidar_link': 3500,
     'oak_base': 1500,
     'pt_base_link': 3500,
     'pt_link1': 1200,
@@ -196,6 +196,11 @@ MIDDLE_WHEELS = {'left_mid_wheel': (0.0, 0.0883, -0.0412),
                  'right_mid_wheel': (0.0, -0.0883, -0.0412)}
 
 LINKS = ['base_link', 'base_lidar_link', 'oak_base', 'pt_base_link', 'pt_link1', 'pt_link2']
+
+# Sensors that sit inside their own housing: (origin in the link frame, radius in m). Faces of
+# that link within the radius that face the origin are inner walls; nobody sees them from
+# outside, but the Webots Lidar (translation 0 0 0.02 in generate_proto.py) would hit them.
+SENSOR_CLEARANCE = {'base_lidar_link': ((0.0, 0.0, 0.02), 0.035)}
 
 
 # ---------------------------------------------------------------------------
@@ -508,6 +513,17 @@ def visible_triangles(meshes, views=192, resolution=2048):
     return out
 
 
+def inner_walls(link, v, f):
+    """Faces of link near its sensor origin (SENSOR_CLEARANCE) that face that origin."""
+    if link not in SENSOR_CLEARANCE or not len(f):
+        return np.zeros(len(f), bool)
+    origin, radius = SENSOR_CLEARANCE[link]
+    m = trimesh.Trimesh(v, f, process=False)
+    to_origin = np.asarray(origin) - m.triangles_center
+    near = np.linalg.norm(to_origin, axis=1) < radius
+    return near & ((m.face_normals * to_origin).sum(1) > 0)
+
+
 def grow(faces, mask):
     """Add the faces that share a vertex with a seen face (avoids cracks at the border)."""
     used = np.zeros(faces.max() + 1, bool)
@@ -816,6 +832,15 @@ def main():
         v, f = weld(apply(m, p['v']), p['f'])
         placed.setdefault(link, []).append((p['material'], v, f, p['name']))
 
+    # ---- inner walls around sensors ----
+    for link in SENSOR_CLEARANCE:
+        removed = 0
+        for i, (mat, v, f, name) in enumerate(placed[link]):
+            inner = inner_walls(link, v, f)
+            removed += int(inner.sum())
+            placed[link][i] = (mat, v, f[~inner], name)
+        print(f'  {link}: removed {removed} inner faces around the sensor')
+
     # ---- visibility: fixed links together (with wheels as occluders), moving links alone ----
     wheels = [p for p in parts if p['group'] == 'wheel']
     wheel_occluders = [(apply(CAD_TO_BASE, p['v']), p['f']) for p in wheels]
@@ -869,6 +894,7 @@ def main():
                 np.savez(os.path.join(os.environ['UGV_MESH_DUMP'], f'{link}_{mat}.npz'), v=v, f=f)
             target = max(60, int(BUDGET[link] * weights[mat] / wsum))
             v, f = decimate(v, f, min(target, counts[mat]))
+            f = f[~inner_walls(link, v, f)]  # decimation can make new ones
             if args.report:
                 print(f'    {link} {mat}: {counts[mat]} -> target {target} -> {len(f)}')
             vv, nn, ff, _ = split_normals(v, f)
@@ -907,14 +933,17 @@ def main():
     tex = {'rubber': {'normal': os.path.join(OUT_WEBOTS, 'tire_normal.png'),
                       'color': os.path.join(OUT_WEBOTS, 'tire_color.png')}}
 
-    def add_link(name, parent, matrix, groups):
+    def add_link(name, parent, matrix, groups, shared=None):
+        """Add a link node; with shared, reuse the geometry named {shared}_{material}."""
         scene.graph.update(frame_to=name, frame_from=parent, matrix=matrix)
         for mat, v, n, f, uv in groups:
-            material = pbr(materials, mat, tex.get(mat) if uv is not None else None)
-            visual = trimesh.visual.TextureVisuals(uv=uv, material=material)
-            mesh = trimesh.Trimesh(v, f, vertex_normals=n, visual=visual, process=False)
-            scene.add_geometry(mesh, node_name=f'{name}_{mat}', geom_name=f'{name}_{mat}',
-                               parent_node_name=name)
+            geom = f'{shared or name}_{mat}'
+            if geom not in scene.geometry:
+                material = pbr(materials, mat, tex.get(mat) if uv is not None else None)
+                visual = trimesh.visual.TextureVisuals(uv=uv, material=material)
+                scene.geometry[geom] = trimesh.Trimesh(v, f, vertex_normals=n, visual=visual,
+                                                       process=False)
+            scene.graph.update(frame_to=f'{name}_{mat}', frame_from=name, geometry=geom)
 
     add_link('base_footprint', 'ugv_rover', np.eye(4), [])
     add_link('base_link', 'base_footprint', joints['base_link'][3], glb_meshes['base_link'])
@@ -926,10 +955,10 @@ def main():
                  'right_down_wheel_link'):
         add_link(link, 'base_link', joints[link][3], [])
         add_link(link + '_visual', link, flip if link.startswith('right') else np.eye(4),
-                 wheel_groups)
+                 wheel_groups, shared='wheel')
     for name, xyz in MIDDLE_WHEELS.items():
         add_link(name, 'base_link', transform(xyz, flip[:3, :3] if name.startswith('right')
-                                              else np.eye(3)), wheel_groups)
+                                              else np.eye(3)), wheel_groups, shared='wheel')
     glb_path = os.path.join(OUT_GLB, 'ugv_rover.glb')
     scene.export(glb_path)
     manifest['glb'] = os.path.relpath(glb_path, REPO)
