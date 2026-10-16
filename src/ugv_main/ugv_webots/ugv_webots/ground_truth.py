@@ -17,7 +17,8 @@ webots_ros2 Python plugin publishing the true pose of the robot.
 
 Loaded by the Webots driver from resource/webots_extras.urdf. It publishes a
 nav_msgs/Odometry on /ugv_webots/ground_truth with frame_id "world" (the Webots
-world origin) and child_frame_id "base_footprint". It does not publish TF, so
+world origin) and child_frame_id "base_footprint" (the twist is in base_footprint,
+as REP 105 defines it). It does not publish TF, so
 it never conflicts with the odometry or SLAM transforms.
 
 Use it to measure odometry drift and SLAM accuracy in simulation
@@ -75,8 +76,12 @@ class GroundTruthPublisher:
         self._last = t
 
         position = self._self_node.getPosition()
-        qx, qy, qz, qw = _quaternion_from_matrix(self._self_node.getOrientation())
-        velocity = self._self_node.getVelocity()  # world frame [vx, vy, vz, wx, wy, wz]
+        rotation = self._self_node.getOrientation()  # row-major, body to world
+        qx, qy, qz, qw = _quaternion_from_matrix(rotation)
+        # Webots gives world frame velocities; Odometry wants them in child_frame_id.
+        world = self._self_node.getVelocity()  # [vx, vy, vz, wx, wy, wz]
+        velocity = [sum(rotation[3 * k + i] * world[offset + k] for k in range(3))
+                    for offset in (0, 3) for i in range(3)]
 
         msg = self._msg
         msg.header.stamp = Time(seconds=t).to_msg()

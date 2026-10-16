@@ -26,7 +26,7 @@ The test needs Webots. It is skipped when Webots cannot be found
 (WEBOTS_HOME, /usr/local/webots or webots on the PATH). UGV_SIM_TEST=0 skips
 it, UGV_SIM_TEST=1 runs it even if Webots was not found. Set
 UGV_TEST_ARTIFACTS to a directory to get a JSON summary and the last camera
-frames there (CI uploads them when the test fails).
+frames there.
 """
 
 import json
@@ -56,7 +56,7 @@ import tf2_ros
 from tf2_msgs.msg import TFMessage
 import yaml
 
-# Wall-clock budgets. Generous because CI runners render the cameras on the CPU
+# Wall-clock budgets. Generous because machines without a GPU render the cameras on the CPU
 # (real-time factor can drop well below 1) and the first start of a world
 # downloads its textures.
 STARTUP_TIMEOUT = 300.0

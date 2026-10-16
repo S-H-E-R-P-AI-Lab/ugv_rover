@@ -1,7 +1,6 @@
 # UGV Rover workspace (S-H-E-R-P AI Lab)
 
 [![CI](https://github.com/S-H-E-R-P-AI-Lab/ugv_rover/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/S-H-E-R-P-AI-Lab/ugv_rover/actions/workflows/ci.yml)
-[![Sim smoke test](https://github.com/S-H-E-R-P-AI-Lab/ugv_rover/actions/workflows/sim-smoke.yml/badge.svg?branch=main)](https://github.com/S-H-E-R-P-AI-Lab/ugv_rover/actions/workflows/sim-smoke.yml)
 
 ROS 2 Humble workspace for the **Waveshare UGV Rover** (6-wheel skid steer, LD19 lidar,
 pan-tilt USB camera, OAK-D depth camera), with a **Webots simulator** that behaves like the

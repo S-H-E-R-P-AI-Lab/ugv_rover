@@ -135,7 +135,7 @@ echo "(The 'cmake_modules' message from rf2o_laser_odometry is expected and harm
 # ---------------------------------------------------------------------------
 step "Environment in ~/.bashrc"
 add_line "source /opt/ros/humble/setup.bash"
-add_line "[ -f $WS/install/setup.bash ] && source $WS/install/setup.bash"
+add_line "[ -f \"$WS/install/setup.bash\" ] && source \"$WS/install/setup.bash\""
 add_line "export UGV_MODEL=ugv_rover"
 add_line "export LDLIDAR_MODEL=ld19"
 if is_wsl; then

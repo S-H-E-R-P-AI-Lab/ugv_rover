@@ -4,7 +4,8 @@
 (https://github.com/waveshareteam/ugv_ws). We keep upstream packages untouched where
 possible so merges stay easy. Everything we added lives in new files:
 `src/ugv_main/ugv_webots/`, `docs/ROS2_PRIMER.md`, `docs/SIMULATOR.md`,
-`docs/TROUBLESHOOTING.md`, `docs/setup/`, `docs/UPSTREAM_CHANGES.md`, `scripts/`.
+`docs/TROUBLESHOOTING.md`, `docs/setup/`, `docs/UPSTREAM_CHANGES.md`, `docs/CI.md`, `scripts/`,
+`.github/` (CI workflows and the pull request template).
 
 This page lists every change to a file that exists upstream, and why.
 
