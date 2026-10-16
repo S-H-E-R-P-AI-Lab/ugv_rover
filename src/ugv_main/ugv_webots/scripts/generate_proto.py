@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Regenerate protos/UgvRover.proto from the upstream URDF.
+"""
+Regenerate protos/UgvRover.proto from the upstream URDF.
 
 Run from the workspace root after building, with ROS sourced:
 
@@ -120,7 +121,9 @@ DEF_RENAMES = {'3d_camera_link': 'oak_body'}
 # URDF helpers
 # ---------------------------------------------------------------------------
 def rpy_matrix(r, p, y):
-    cr, sr, cp, sp, cy, sy = math.cos(r), math.sin(r), math.cos(p), math.sin(p), math.cos(y), math.sin(y)
+    cr, sr = math.cos(r), math.sin(r)
+    cp, sp = math.cos(p), math.sin(p)
+    cy, sy = math.cos(y), math.sin(y)
     return [[cy * cp, cy * sp * sr - sy * cr, cy * sp * cr + sy * sr],
             [sy * cp, sy * sp * sr + cy * cr, sy * sp * cr - cy * sr],
             [-sp, cp * sr, cp * cr]]
@@ -185,7 +188,8 @@ def rigid_bodies(links, joints):
         bodies[body].append((link, xyz, rot))
         for jtype, child, cxyz, crot in children.get(link, []):
             if jtype == 'fixed':
-                walk(child, body, [a + b for a, b in zip(xyz, matvec(rot, cxyz))], matmul(rot, crot))
+                walk(child, body, [a + b for a, b in zip(xyz, matvec(rot, cxyz))],
+                     matmul(rot, crot))
             else:
                 bodies[child] = []
                 walk(child, child, [0.0, 0.0, 0.0], [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
@@ -198,7 +202,7 @@ def rigid_bodies(links, joints):
 
 
 def combine(links, members):
-    """Combined (mass, com, inertia about com) of the links of one rigid body."""
+    """Combine (mass, com, inertia about com) of the links of one rigid body."""
     parts = []
     for link, xyz, rot in members:
         if links.get(link) is None:
@@ -245,7 +249,8 @@ def read_stl(path):
         count = struct.unpack('<I', data[80:84])[0]
         for i in range(count):
             offset = 84 + i * 50 + 12
-            triangles.append([struct.unpack('<3f', data[offset + 12 * k:offset + 12 * k + 12]) for k in range(3)])
+            triangles.append([struct.unpack('<3f', data[offset + 12 * k:offset + 12 * k + 12])
+                              for k in range(3)])
     return triangles
 
 
@@ -346,8 +351,8 @@ def physics_block(mass, com, inertia):
     return ('physics Physics {\n  density -1\n  mass %.6f\n  centerOfMass [ %.6f %.6f %.6f ]\n'
             '  inertiaMatrix [\n    %.6e %.6e %.6e\n    %.6e %.6e %.6e\n  ]\n}' % (
                 mass, com[0], com[1], com[2],
-                inertia[0][0], inertia[1][1], inertia[2][2], inertia[0][1], inertia[0][2], inertia[1][2]))
-
+                inertia[0][0], inertia[1][1], inertia[2][2],
+                inertia[0][1], inertia[0][2], inertia[1][2]))
 
 
 def axis_angle(rot):
@@ -362,18 +367,20 @@ def axis_angle(rot):
         axis = [rot[k][j] / (2.0 * d[k]) if j != k else d[k] for j in range(3)]
         return (axis[0], axis[1], axis[2], angle)
     s = 2.0 * math.sin(angle)
-    return ((rot[2][1] - rot[1][2]) / s, (rot[0][2] - rot[2][0]) / s, (rot[1][0] - rot[0][1]) / s, angle)
+    return ((rot[2][1] - rot[1][2]) / s, (rot[0][2] - rot[2][0]) / s,
+            (rot[1][0] - rot[0][1]) / s, angle)
 
 
 def box_bounding(boxes):
-    """boundingObject Group of boxes [(centre xyz, axis-angle or None, size xyz)]."""
+    """Build a boundingObject Group of boxes [(centre xyz, axis-angle or None, size xyz)]."""
     nodes = []
     for centre, rotation, size in boxes:
         rot = ''
         if rotation and abs(rotation[3]) > 1e-9:
             rot = '  rotation %.6f %.6f %.6f %.6f\n' % rotation
-        nodes.append('Pose {\n  translation %.6g %.6g %.6g\n%s  children [\n    Box {\n      size %.6g %.6g %.6g\n'
-                     '    }\n  ]\n}' % (centre[0], centre[1], centre[2], rot, size[0], size[1], size[2]))
+        nodes.append('Pose {\n  translation %.6g %.6g %.6g\n%s  children [\n'
+                     '    Box {\n      size %.6g %.6g %.6g\n    }\n  ]\n}' % (
+                         centre[0], centre[1], centre[2], rot, size[0], size[1], size[2]))
     return 'boundingObject Group {\n  children [\n%s\n  ]\n}' % indent('\n'.join(nodes), 4)
 
 
@@ -412,7 +419,8 @@ def main():
         mass, _, tensor = value
         problems = check_inertia(name, mass, tensor)
         bad |= bool(problems)
-        print(f'  {name:24s} m={mass:.4f}  I=({tensor[0][0]:.3e}, {tensor[1][1]:.3e}, {tensor[2][2]:.3e})'
+        print(f'  {name:24s} m={mass:.4f}  '
+              f'I=({tensor[0][0]:.3e}, {tensor[1][1]:.3e}, {tensor[2][2]:.3e})'
               f'  {"; ".join(problems) if problems else "ok"}')
     if bad:
         sys.exit('Non physical inertia in the URDF, fix it before generating the PROTO.')
@@ -434,8 +442,8 @@ def main():
         def_name = DEF_RENAMES.get(m.group(1), m.group(1))
         ifs, box = indexed_face_set(m.group(2))
         mesh_boxes[m.group(1)] = box
-        text = text[:m.start()] + f'DEF {def_name} ' + indent(ifs, line_indent(text, m.start())).lstrip(' ') \
-            + text[m.end():]
+        body = indent(ifs, line_indent(text, m.start())).lstrip(' ')
+        text = text[:m.start()] + f'DEF {def_name} ' + body + text[m.end():]
     for old, new in DEF_RENAMES.items():
         text = text.replace(f'USE {old}\n', f'USE {new}\n')
 
@@ -464,7 +472,8 @@ def main():
         pad = ' ' * line_indent(text, at)
         text = text.replace(
             motor + pad + 'maxTorque 10000\n',
-            motor + pad + f'maxVelocity {WHEEL_MAX_VELOCITY}\n' + pad + f'maxTorque {WHEEL_MAX_TORQUE}\n', 1)
+            motor + pad + f'maxVelocity {WHEEL_MAX_VELOCITY}\n'
+            + pad + f'maxTorque {WHEEL_MAX_TORQUE}\n', 1)
         at = text.index(f'name "{side}_wheel_link"')
         pad = ' ' * line_indent(text, at)
         text = text[:at] + f'name "{side}_wheel_link"\n{pad}contactMaterial "{WHEEL_MATERIAL}"' + \
@@ -493,33 +502,43 @@ def main():
         boxes = []
         for link, xyz, rot in members:
             for centre, size in link_boxes.get(link, []):
-                boxes.append(([a + b for a, b in zip(xyz, matvec(rot, centre))], axis_angle(rot), size))
+                boxes.append(([a + b for a, b in zip(xyz, matvec(rot, centre))],
+                              axis_angle(rot), size))
         bounding = box_bounding(boxes) if boxes else None
 
         if body == 'base_footprint':
             anchor = 'selfCollision IS selfCollision\n'
-            text = text.replace(anchor, anchor + indent(bounding, 4) + '\n' + indent(physics, 4) + '\n', 1)
+            text = text.replace(
+                anchor, anchor + indent(bounding, 4) + '\n' + indent(physics, 4) + '\n', 1)
         else:
             span = find_solid_field(text, body, 'physics')
-            text = text[:span[0]] + indent(physics, line_indent(text, span[0])).lstrip(' ') + text[span[1]:]
+            block = indent(physics, line_indent(text, span[0])).lstrip(' ')
+            text = text[:span[0]] + block + text[span[1]:]
             if bounding:
                 span = find_solid_field(text, body, 'boundingObject')
-                text = text[:span[0]] + indent(bounding, line_indent(text, span[0])).lstrip(' ') + text[span[1]:]
+                block = indent(bounding, line_indent(text, span[0])).lstrip(' ')
+                text = text[:span[0]] + block + text[span[1]:]
 
         for link, _, _ in members:
             if link != body and f'name "{link}"' in text:
                 text = solid_to_pose(text, link)
     # ---- header ----
     text = re.sub(r'^#VRML_SIM \S+ utf8', '#VRML_SIM R2025a utf8', text)
-    text = re.sub(r'# This is a proto file for Webots for the UgvRover\n# Extracted from: [^\n]*\n',
+    text = re.sub(r'# This is a proto file for Webots for the UgvRover\n'
+                  r'# Extracted from: [^\n]*\n',
                   '# Waveshare UGV Rover (UGV_MODEL=ugv_rover) for Webots.\n'
-                  '# GENERATED by ugv_webots/scripts/generate_proto.py from ugv_description/urdf/bases/ugv_rover.xacro.\n'
-                  '# Do not edit by hand: change the script and regenerate (see docs/SIMULATOR.md).\n'
+                  '# GENERATED by ugv_webots/scripts/generate_proto.py '
+                  'from ugv_description/urdf/bases/ugv_rover.xacro.\n'
+                  '# Do not edit by hand: change the script and regenerate '
+                  '(see docs/SIMULATOR.md).\n'
                   '# keywords: robot/wheeled\n'
                   '# template language: javascript\n', text)
-    text = text.replace('field  SFString    name            "UgvRover"', 'field  SFString    name            "ugv_rover"')
-    text = text.replace('field  SFString    controller      "void"', 'field  SFString    controller      "<extern>"')
-    text = text.replace('field  SFBool      supervisor      FALSE', 'field  SFBool      supervisor      TRUE ')
+    text = text.replace('field  SFString    name            "UgvRover"',
+                        'field  SFString    name            "ugv_rover"')
+    text = text.replace('field  SFString    controller      "void"',
+                        'field  SFString    controller      "<extern>"')
+    text = text.replace('field  SFBool      supervisor      FALSE',
+                        'field  SFBool      supervisor      TRUE ')
     if 'controller      "<extern>"' not in text or 'supervisor      TRUE' not in text:
         sys.exit('Unexpected urdf2webots header, update generate_proto.py')
 

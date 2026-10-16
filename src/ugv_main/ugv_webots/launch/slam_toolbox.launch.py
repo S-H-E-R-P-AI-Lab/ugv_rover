@@ -1,4 +1,7 @@
-"""2D SLAM with slam_toolbox in Webots. Mirrors ugv_slam/launch/slam_toolbox.launch.py use_sim_time:=true.
+"""
+2D SLAM with slam_toolbox in Webots.
+
+Mirrors ugv_slam/launch/slam_toolbox.launch.py use_sim_time:=true.
 
     ros2 launch ugv_webots slam_toolbox.launch.py use_slam:=sync
 """
@@ -22,7 +25,8 @@ def generate_launch_description():
         }, condition=LaunchConfigurationEquals('use_slam', mode))
 
     return LaunchDescription(sim_arguments() + [
-        DeclareLaunchArgument('use_slam', default_value='sync', description='slam_toolbox mode: sync or async'),
+        DeclareLaunchArgument('use_slam', default_value='sync',
+                              description='slam_toolbox mode: sync or async'),
         simulation('slam_2d'),
         robot_pose_publisher(),
         slam('sync'),

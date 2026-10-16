@@ -1,4 +1,5 @@
-"""2D SLAM with gmapping in Webots. Mirrors ugv_slam/launch/gmapping.launch.py use_sim_time:=true.
+"""
+2D SLAM with gmapping in Webots. Mirrors ugv_slam/launch/gmapping.launch.py use_sim_time:=true.
 
     ros2 launch ugv_webots gmapping.launch.py
     ros2 run ugv_tools keyboard_ctrl        # drive around, then save the map:

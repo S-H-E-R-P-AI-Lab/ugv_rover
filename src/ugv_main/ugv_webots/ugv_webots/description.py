@@ -1,4 +1,5 @@
-"""Build the robot description used by the Webots simulation.
+"""
+Build the robot description used by the Webots simulation.
 
 The URDF is generated from the upstream xacro
 (ugv_description/urdf/bases/<model>.xacro) so the simulation always uses the

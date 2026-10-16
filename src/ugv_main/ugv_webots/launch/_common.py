@@ -22,14 +22,15 @@ def sim_arguments(default_world='apartment.wbt'):
     return [
         DeclareLaunchArgument('world', default_value=default_world,
                               description='World file in ugv_webots/worlds'),
-        DeclareLaunchArgument('use_rviz', default_value='true', description='Whether to launch RViz2'),
+        DeclareLaunchArgument('use_rviz', default_value='true',
+                              description='Whether to launch RViz2'),
         DeclareLaunchArgument('headless', default_value='false',
                               description='Start Webots minimized without rendering the 3D view'),
     ]
 
 
 def simulation(rviz_config):
-    """The Webots simulation, in place of ugv_bringup/bringup_lidar.launch.py on the robot."""
+    """Include the Webots simulation, which replaces ugv_bringup/bringup_lidar.launch.py."""
     return include('ugv_webots', 'launch', 'ugv_webots.launch.py', args={
         'world': LaunchConfiguration('world'),
         'use_rviz': LaunchConfiguration('use_rviz'),

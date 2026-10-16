@@ -1,4 +1,5 @@
-"""Republish the Webots lidar scan in the layout of the real LD19 driver.
+"""
+Republish the Webots lidar scan in the layout of the real LD19 driver.
 
 webots_ros2's Lidar plugin publishes a clockwise scan: angle_min = +fov/2,
 angle_max = -fov/2 and a negative angle_increment. Some consumers (for example
@@ -29,7 +30,8 @@ class ScanNormalizer(Node):
         # A reliable publisher matches both reliable and best effort subscribers.
         self._pub = self.create_publisher(
             LaserScan, out_topic, QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE))
-        self._sub = self.create_subscription(LaserScan, in_topic, self._on_scan, qos_profile_sensor_data)
+        self._sub = self.create_subscription(
+            LaserScan, in_topic, self._on_scan, qos_profile_sensor_data)
 
     def _on_scan(self, msg):
         n = len(msg.ranges)

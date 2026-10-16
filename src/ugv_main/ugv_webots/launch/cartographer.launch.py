@@ -1,4 +1,7 @@
-"""2D SLAM with Cartographer in Webots. Mirrors ugv_slam/launch/cartographer.launch.py use_sim_time:=true.
+"""
+2D SLAM with Cartographer in Webots.
+
+Mirrors ugv_slam/launch/cartographer.launch.py use_sim_time:=true.
 
     ros2 launch ugv_webots cartographer.launch.py
 """

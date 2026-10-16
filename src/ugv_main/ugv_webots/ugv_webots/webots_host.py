@@ -1,4 +1,5 @@
-"""Find the address of the machine running Webots when ROS runs in WSL or a VM.
+"""
+Find the address of the machine running Webots when ROS runs in WSL or a VM.
 
 webots_ros2 2025.0.0 (the Humble release) connects the robot controller to
 Windows Webots at the first "nameserver" of /etc/resolv.conf. Recent WSL
@@ -26,7 +27,8 @@ def wsl_networking_mode():
     """Return 'nat', 'mirrored', ... or None if it cannot be determined."""
     if shutil.which('wslinfo'):
         try:
-            out = subprocess.run(['wslinfo', '--networking-mode'], capture_output=True, text=True, timeout=5)
+            out = subprocess.run(['wslinfo', '--networking-mode'],
+                                 capture_output=True, text=True, timeout=5)
             mode = out.stdout.strip().lower()
             if mode:
                 return mode
@@ -37,7 +39,8 @@ def wsl_networking_mode():
 
 def default_gateway():
     try:
-        out = subprocess.run(['ip', 'route', 'show', 'default'], capture_output=True, text=True, timeout=5)
+        out = subprocess.run(['ip', 'route', 'show', 'default'],
+                             capture_output=True, text=True, timeout=5)
     except (OSError, subprocess.SubprocessError):
         return None
     for line in out.stdout.splitlines():

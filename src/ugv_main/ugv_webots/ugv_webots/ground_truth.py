@@ -1,4 +1,5 @@
-"""webots_ros2 Python plugin publishing the true pose of the robot.
+"""
+webots_ros2 Python plugin publishing the true pose of the robot.
 
 Loaded by the Webots driver from resource/webots_extras.urdf. It publishes a
 nav_msgs/Odometry on /ugv_webots/ground_truth with frame_id "world" (the Webots

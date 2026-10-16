@@ -1,4 +1,5 @@
-"""Drive a fixed pattern and compare commanded motion, /odom and ground truth.
+"""
+Drive a fixed pattern and compare commanded motion, /odom and ground truth.
 
 Usage (with the simulation running):
     ros2 run ugv_webots motion_check
@@ -103,7 +104,8 @@ class MotionCheck(Node):
         cmd = Twist()
         cmd.angular.z = self.angular_speed
         angle = 2.0 * math.pi * self.turns
-        self.get_logger().info(f'Rotating {math.degrees(angle):.1f} deg at {self.angular_speed:.2f} rad/s')
+        self.get_logger().info(
+            f'Rotating {math.degrees(angle):.1f} deg at {self.angular_speed:.2f} rad/s')
         self.spin_for(angle / self.angular_speed, cmd)
         self.spin_for(self.settle, stop)
         o2, t2 = self.odom.snapshot(), self.truth.snapshot()
@@ -122,11 +124,13 @@ class MotionCheck(Node):
         lines = [
             '',
             'Leg               commanded      /odom   ground truth   odom err   truth err',
-            f'forward [m]       {self.distance:9.3f}  {od:9.3f}  {td:13.3f}  {od - self.distance:+9.3f}  '
+            f'forward [m]       {self.distance:9.3f}  {od:9.3f}  {td:13.3f}  '
+            f'{od - self.distance:+9.3f}  '
             f'{td - self.distance:+10.3f}',
             f'lateral [m]       {0.0:9.3f}  {ol:9.3f}  {tl:13.3f}',
             f'heading drift [deg] {0.0:7.2f}  {oyaw1:9.2f}  {tyaw1:13.2f}',
-            f'rotation [deg]    {cmd_deg:9.1f}  {oyaw:9.1f}  {tyaw:13.1f}  {oyaw - cmd_deg:+9.1f}  '
+            f'rotation [deg]    {cmd_deg:9.1f}  {oyaw:9.1f}  {tyaw:13.1f}  '
+            f'{oyaw - cmd_deg:+9.1f}  '
             f'{tyaw - cmd_deg:+10.1f}',
             f'odom vs truth: forward {od - td:+.3f} m, rotation {oyaw - tyaw:+.1f} deg',
         ]

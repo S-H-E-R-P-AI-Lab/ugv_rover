@@ -1,4 +1,5 @@
-"""Start the UGV Rover in Webots.
+"""
+Start the UGV Rover in Webots.
 
     ros2 launch ugv_webots ugv_webots.launch.py
     ros2 launch ugv_webots ugv_webots.launch.py world:=empty_arena.wbt use_rviz:=true
@@ -33,7 +34,7 @@ ROBOT_NAME = 'ugv_rover'
 
 
 def rviz_config_path(name):
-    """Same choices as ugv_gazebo's rviz_config argument, plus 'webots' (sensor overview)."""
+    """Return the RViz config path (ugv_gazebo choices plus 'webots')."""
     if name == 'webots':
         return os.path.join(get_package_share_directory('ugv_webots'), 'rviz', 'view_webots.rviz')
     choices = {
@@ -53,7 +54,8 @@ def launch_setup(context, *args, **kwargs):
     model = os.environ.get('UGV_MODEL', ROBOT_NAME)
     actions = []
     if model != ROBOT_NAME:
-        actions.append(LogInfo(msg=f'UGV_MODEL={model}, but ugv_webots only models ugv_rover. Using ugv_rover.'))
+        actions.append(LogInfo(
+            msg=f'UGV_MODEL={model}, but ugv_webots only models ugv_rover. Using ugv_rover.'))
 
     host = patch_webots_ros2()
     if host:
@@ -69,16 +71,18 @@ def launch_setup(context, *args, **kwargs):
     webots = WebotsLauncher(
         world=PathJoinSubstitution([package_dir, 'worlds', LaunchConfiguration('world')]),
         mode=LaunchConfiguration('mode'),
-        gui=PythonExpression(["'false' if '", headless, "'.lower() in ('true', '1', 'yes') else 'true'"]),
-        # The Ros2Supervisor publishes /clock (webots_ros2 2025.0.0); without it sim time stays at 0
-        # and ros2_control never updates.
+        gui=PythonExpression(
+            ["'false' if '", headless, "'.lower() in ('true', '1', 'yes') else 'true'"]),
+        # The Ros2Supervisor publishes /clock (webots_ros2 2025.0.0); without it sim time
+        # stays at 0 and ros2_control never updates.
         ros2_supervisor=True,
     )
 
     driver = WebotsController(
         robot_name=ROBOT_NAME,
         parameters=[
-            {'robot_description': urdf_file, 'use_sim_time': True, 'set_robot_state_publisher': False},
+            {'robot_description': urdf_file, 'use_sim_time': True,
+             'set_robot_state_publisher': False},
             os.path.join(package_dir, 'resource', 'ros2_control.yaml'),
         ],
         remappings=[
@@ -101,8 +105,10 @@ def launch_setup(context, *args, **kwargs):
         package='controller_manager',
         executable='spawner',
         output='screen',
-        arguments=['joint_state_broadcaster', 'diffdrive_controller', 'pt_joint_position_controller',
-                   '--controller-manager', '/controller_manager', '--controller-manager-timeout', '60'],
+        arguments=['joint_state_broadcaster', 'diffdrive_controller',
+                   'pt_joint_position_controller',
+                   '--controller-manager', '/controller_manager',
+                   '--controller-manager-timeout', '60'],
         parameters=[{'use_sim_time': True}],
     )
 
@@ -147,7 +153,8 @@ def launch_setup(context, *args, **kwargs):
         oak_points,
         rviz,
         # Stop everything when Webots is closed.
-        RegisterEventHandler(OnProcessExit(target_action=webots, on_exit=[EmitEvent(event=Shutdown())])),
+        RegisterEventHandler(
+            OnProcessExit(target_action=webots, on_exit=[EmitEvent(event=Shutdown())])),
     ]
     return actions
 
@@ -155,15 +162,19 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('world', default_value='apartment.wbt',
-                              description='World file in ugv_webots/worlds: apartment.wbt or empty_arena.wbt'),
+                              description='World file in ugv_webots/worlds: '
+                                          'apartment.wbt or empty_arena.wbt'),
         DeclareLaunchArgument('mode', default_value='realtime',
                               description='Webots start mode: realtime, fast or pause'),
         DeclareLaunchArgument('headless', default_value='false',
                               description='Start Webots minimized without rendering the 3D view'),
-        DeclareLaunchArgument('use_rviz', default_value='false', description='Whether to launch RViz2'),
+        DeclareLaunchArgument('use_rviz', default_value='false',
+                              description='Whether to launch RViz2'),
         DeclareLaunchArgument('rviz_config', default_value='webots',
-                              description='RViz config: webots, description, bringup, slam_2d, slam_3d, nav_2d, nav_3d'),
+                              description='RViz config: webots, description, bringup, '
+                                          'slam_2d, slam_3d, nav_2d, nav_3d'),
         DeclareLaunchArgument('use_oak_points', default_value='true',
-                              description='Publish /oak/points from the simulated OAK depth image'),
+                              description='Publish /oak/points from the simulated OAK '
+                                          'depth image'),
         OpaqueFunction(function=launch_setup),
     ])
