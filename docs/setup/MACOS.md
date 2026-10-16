@@ -138,7 +138,7 @@ the VM (UTM's shared network usually makes it `192.168.64.1`). If it is wrong, s
 
 The first start of a world downloads furniture and textures; if Webots stays empty for more
 than 3 minutes, stop and relaunch, or install the offline asset cache (see
-[TROUBLESHOOTING.md](../TROUBLESHOOTING.md#webots-shows-nothing-for-minutes-no-error-clock-never-appears)).
+[TROUBLESHOOTING.md](../TROUBLESHOOTING.md#webots-shows-nothing-for-minutes-no-error-clock-never-appears-seen)).
 The cache folder on macOS is `~/Library/Caches/Cyberbotics/Webots`.
 
 Drive from a second VM terminal with `ros2 run ugv_tools keyboard_ctrl`. Next steps:

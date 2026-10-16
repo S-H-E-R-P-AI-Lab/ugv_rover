@@ -116,7 +116,7 @@ cameras and depth points.
 * **The first start of each world downloads furniture and textures from GitHub** and can
   take a few minutes. If nothing happens for more than 3 minutes, press Ctrl+C in the
   terminal, close Webots, and run the command again (see
-  [TROUBLESHOOTING.md](../TROUBLESHOOTING.md#webots-shows-nothing-for-minutes-no-error-clock-never-appears)).
+  [TROUBLESHOOTING.md](../TROUBLESHOOTING.md#webots-shows-nothing-for-minutes-no-error-clock-never-appears-seen)).
 * Do not use **Reload world** in Webots; stop and relaunch instead.
 
 Drive it from a second Ubuntu terminal:
