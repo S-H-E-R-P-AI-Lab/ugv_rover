@@ -115,6 +115,7 @@ set -u
 # -r: continue past the known harmless 'cmake_modules' key of rf2o_laser_odometry
 ( cd "$WS" && rosdep install --from-paths src --ignore-src -y -r --rosdistro humble 2>&1 \
     | grep -vE '^(Get|Selecting|Preparing|Unpacking|Setting up|Processing|Reading|Building)' | tail -5 ) || true
+echo "(The 'cmake_modules' message from rf2o_laser_odometry is expected and harmless.)"
 
 # ---------------------------------------------------------------------------
 step "Environment in ~/.bashrc"
