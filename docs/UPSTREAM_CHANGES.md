@@ -1,0 +1,56 @@
+# Changes to upstream files
+
+`main` tracks Waveshare's `ros2-humble-develop-251125` branch
+(https://github.com/waveshareteam/ugv_ws). We keep upstream packages untouched where
+possible so merges stay easy. Everything we added lives in new files:
+`src/ugv_main/ugv_webots/`, `docs/ROS2_PRIMER.md`, `docs/SIMULATOR.md`,
+`docs/TROUBLESHOOTING.md`, `docs/setup/`, `docs/UPSTREAM_CHANGES.md`, `scripts/`.
+
+This page lists every change to a file that exists upstream, and why.
+
+| File | Change | Reason |
+|---|---|---|
+| `README.md` | Replaced by our landing page. The original is kept verbatim (only relative links adjusted) as `docs/UPSTREAM_README.md`. | The team needs an entry point for the simulator and per OS setup. |
+| `.gitignore` | Extended (Python caches, Webots generated files, editor files, Windows metadata). Upstream entries kept. | Keep build output and Webots temporary files out of commits. |
+| `build_first.sh` | `WS=/home/ws/ugv_ws` became `WS="${UGV_WS:-/home/ws/ugv_ws}"`. Added `ros-humble-webots-ros2` and `ros-humble-depth-image-proc` to the apt list. Builds `ugv_webots` when `ros-humble-webots-ros2` is installed. | The script hard codes the path used inside Waveshare's Docker image. Setting `UGV_WS` lets us run it on a laptop. The default is unchanged, so it behaves the same on the robot. |
+| `build_common.sh` | Same `UGV_WS` override, `ugv_webots` added to the package menu. | Same as above. |
+
+No upstream ROS package (`src/ugv_main/*` other than `ugv_webots`, `src/ugv_else/*`) is
+modified. In particular `ugv_gazebo` and `ugv_description` are untouched: the Webots robot
+model is generated from `ugv_description` at build and launch time (see
+[SIMULATOR.md](SIMULATOR.md)), and the simulator reuses the SLAM and Nav2 configuration
+files of `ugv_slam` and `ugv_nav` as they are.
+
+## Upstream quirks we work around (not changed upstream)
+
+| Upstream behaviour | How ugv_webots handles it |
+|---|---|
+| `ugv_rover.xacro` only produces the simulation camera frames (`oak_base`, optical `3d_camera_link`) when `use_gazebo:=true`, and that flag also pulls in the Gazebo plugin file. | `ugv_webots/description.py` removes the Gazebo include from a temporary copy of the xacro, then processes it with `use_gazebo:=true`. |
+| The pan-tilt `<ros2_control>` block in `pt.xacro` selects a Gazebo or mock hardware plugin. | Dropped from the generated URDF and replaced by `resource/webots_extras.urdf`. |
+| The chassis mesh `ugv_rover_base.stl` reaches the ground (it contains the side frames and six wheels), so it cannot be used for collisions. | The generated PROTO uses two collision boxes that clear the wheels. |
+| The pan-tilt camera frame `pt_camera_link` and the Gazebo OAK frame are not optical frames (x forward), though images are stamped with them. | Kept as is for compatibility, documented in [SIMULATOR.md](SIMULATOR.md#known-gaps-versus-the-real-robot). |
+| `rf2o_laser_odometry/package.xml` depends on `cmake_modules`, a ROS 1 package with no Humble rosdep rule. | Harmless: rosdep reports it, the package builds fine without it. |
+
+## Syncing with upstream
+
+```bash
+cd ~/ugv_rover
+git fetch upstream
+git checkout main
+git merge upstream/ros2-humble-develop-251125
+# resolve conflicts if any, most likely in README.md, build_first.sh or build_common.sh
+colcon build --symlink-install
+source install/setup.bash
+python3 src/ugv_main/ugv_webots/scripts/generate_proto.py   # if ugv_description changed
+git push origin main
+```
+
+After a merge, check:
+
+1. `git diff HEAD@{1} -- src/ugv_main/ugv_description src/ugv_main/ugv_gazebo/config/ros_gz_bridge.yaml`
+   shows whether the robot model or the simulated topic contract changed upstream. If the
+   bridge file changed, update `resource/webots_extras.urdf` and the launch remappings to
+   match, and the table in [SIMULATOR.md](SIMULATOR.md).
+2. If the xacro changed, regenerate the PROTO (command above). The script stops with a clear
+   message if the Gazebo include block it removes has changed shape.
+3. Run the checks in [SIMULATOR.md](SIMULATOR.md#checking-the-simulator) before pushing.
