@@ -27,6 +27,7 @@ match ugv_gazebo (see docs/SIMULATOR.md).
 
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 
@@ -37,7 +38,7 @@ from launch.actions import (DeclareLaunchArgument, EmitEvent, LogInfo, OpaqueFun
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit, OnShutdown
 from launch.events import Shutdown
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 from webots_ros2_driver.wait_for_controller_connection import WaitForControllerConnection
 from webots_ros2_driver.webots_controller import WebotsController
@@ -72,6 +73,37 @@ def stop_driver(urdf_file):
     return []
 
 
+def world_file(package_dir, world, detail):
+    """
+    Return the path of the world to start, with the robot's visual detail set.
+
+    "high" is the PROTO default. For another value a copy of the world with
+    `detail "<value>"` on the UgvRover node is written next to it (hidden file), so the
+    relative EXTERNPROTO paths still resolve.
+    """
+    path = world if os.path.isabs(world) else os.path.join(package_dir, 'worlds', world)
+    if detail == 'high':
+        return path
+    with open(path) as f:
+        text = f.read()
+    text, count = re.subn(r'\bUgvRover\s*\{', f'UgvRover {{\n  detail "{detail}"', text, count=1)
+    if count != 1:
+        raise RuntimeError(f'No UgvRover node in {path}')
+    stem = os.path.splitext(os.path.basename(path))[0]
+    copy = os.path.join(os.path.dirname(path), f'.{stem}_{detail}.wbt')
+    with open(copy, 'w') as f:
+        f.write(text)
+    return copy
+
+
+def share_meshes(package_dir):
+    """Copy the meshes for the macOS shared-folder mode (it copies only what the world names)."""
+    from webots_ros2_driver.utils import container_shared_folder, has_shared_folder
+    if has_shared_folder():
+        shutil.copytree(os.path.join(package_dir, 'protos', 'meshes'),
+                        os.path.join(container_shared_folder(), 'meshes'), dirs_exist_ok=True)
+
+
 def launch_setup(context, *args, **kwargs):
     package_dir = get_package_share_directory('ugv_webots')
     model = os.environ.get('UGV_MODEL', ROBOT_NAME)
@@ -91,8 +123,10 @@ def launch_setup(context, *args, **kwargs):
         f.write(urdf)
 
     headless = LaunchConfiguration('headless')
+    share_meshes(package_dir)
     webots = WebotsLauncher(
-        world=PathJoinSubstitution([package_dir, 'worlds', LaunchConfiguration('world')]),
+        world=world_file(package_dir, context.launch_configurations['world'],
+                         context.launch_configurations['detail']),
         mode=LaunchConfiguration('mode'),
         gui=PythonExpression(
             ["'false' if '", headless, "'.lower() in ('true', '1', 'yes') else 'true'"]),
@@ -201,6 +235,9 @@ def generate_launch_description():
         DeclareLaunchArgument('rviz_config', default_value='webots',
                               description='RViz config: webots, description, bringup, '
                                           'slam_2d, slam_3d, nav_2d, nav_3d'),
+        DeclareLaunchArgument('detail', default_value='high', choices=['high', 'low'],
+                              description='Robot visuals: high (CAD meshes) or low (URDF '
+                                          'meshes, for slow machines and CI)'),
         DeclareLaunchArgument('use_oak_points', default_value='true',
                               description='Publish /oak/points from the simulated OAK '
                                           'depth image'),
