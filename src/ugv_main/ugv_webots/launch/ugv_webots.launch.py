@@ -18,7 +18,7 @@ from launch import LaunchDescription
 from launch.actions import (DeclareLaunchArgument, EmitEvent, LogInfo, OpaqueFunction,
                             RegisterEventHandler)
 from launch.conditions import IfCondition
-from launch.event_handlers import OnProcessExit
+from launch.event_handlers import OnProcessExit, OnShutdown
 from launch.events import Shutdown
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
@@ -30,6 +30,7 @@ from ugv_webots.description import webots_urdf
 from ugv_webots.webots_host import patch_webots_ros2
 
 ROBOT_NAME = 'ugv_rover'
+RVIZ_CONFIGS = ['webots', 'description', 'bringup', 'slam_2d', 'slam_3d', 'nav_2d', 'nav_3d']
 
 
 def rviz_config_path(name):
@@ -44,8 +45,14 @@ def rviz_config_path(name):
         'nav_2d': ('ugv_nav', 'view_nav_2d.rviz'),
         'nav_3d': ('ugv_nav', 'view_nav_3d.rviz'),
     }
-    package, filename = choices.get(name, choices['description'])
+    package, filename = choices[name]
     return os.path.join(get_package_share_directory(package), 'rviz', filename)
+
+
+def remove_file(path):
+    if os.path.exists(path):
+        os.remove(path)
+    return []
 
 
 def launch_setup(context, *args, **kwargs):
@@ -148,6 +155,9 @@ def launch_setup(context, *args, **kwargs):
         rviz,
         # Stop everything when Webots is closed.
         RegisterEventHandler(OnProcessExit(target_action=webots, on_exit=[EmitEvent(event=Shutdown())])),
+        # The driver has read the URDF by then; do not leave one file per launch in /tmp.
+        RegisterEventHandler(OnShutdown(on_shutdown=[
+            OpaqueFunction(function=lambda context: remove_file(urdf_file))])),
     ]
     return actions
 
@@ -161,8 +171,8 @@ def generate_launch_description():
         DeclareLaunchArgument('headless', default_value='false',
                               description='Start Webots minimized without rendering the 3D view'),
         DeclareLaunchArgument('use_rviz', default_value='false', description='Whether to launch RViz2'),
-        DeclareLaunchArgument('rviz_config', default_value='webots',
-                              description='RViz config: webots, description, bringup, slam_2d, slam_3d, nav_2d, nav_3d'),
+        DeclareLaunchArgument('rviz_config', default_value='webots', choices=RVIZ_CONFIGS,
+                              description='RViz config: webots (all sensors) or an upstream one'),
         DeclareLaunchArgument('use_oak_points', default_value='true',
                               description='Publish /oak/points from the simulated OAK depth image'),
         OpaqueFunction(function=launch_setup),
