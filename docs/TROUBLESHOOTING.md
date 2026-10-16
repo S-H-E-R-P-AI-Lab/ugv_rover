@@ -91,6 +91,12 @@ Two causes we hit:
    `Server is unable to maintain the header compression context for the connection`, and
    Webots then waits forever. Stop the launch (Ctrl+C, close Webots) and start again. Each try
    fills the cache further; the apartment world needed three tries on a fresh install.
+   To avoid the downloads entirely, use the official offline cache: download
+   `assets-R2025a.zip` (660 MB) from https://github.com/cyberbotics/webots/releases/tag/R2025a,
+   set Webots' Preferences, Network, Disk cache to at least 1024 MB, and extract the archive
+   so that an `assets` folder ends up in the cache folder: `%LOCALAPPDATA%\Cyberbotics\Webots\cache`
+   on Windows, `~/.cache/Cyberbotics/Webots` on Linux, `~/Library/Caches/Cyberbotics/Webots`
+   on macOS.
 2. **A comment inside a node of a `.wbt` file.** Webots R2025a hangs while parsing a world
    that has a `#` comment inside a node (header comments are fine). Keep comments at the top.
 
