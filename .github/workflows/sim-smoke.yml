@@ -1,0 +1,114 @@
+# Starts the Webots simulation headless and checks topics, TF and driving
+# (src/ugv_main/ugv_webots/test/test_sim_smoke.py). Not a required check yet.
+# Runs nightly, on demand, and on pull requests labelled "run-sim". See docs/CI.md.
+name: Sim smoke test
+
+on:
+  schedule:
+    # 11:30 UTC is 03:30 PST / 04:30 PDT. Schedules only run on the default branch.
+    - cron: '30 11 * * *'
+  workflow_dispatch:
+    inputs:
+      repeat:
+        description: How many times to run the test in a row (flakiness check)
+        required: false
+        default: '1'
+  pull_request:
+    branches: [main]
+    types: [labeled, opened, synchronize, reopened]
+
+concurrency:
+  group: sim-smoke-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  UGV_MODEL: ugv_rover
+  LDLIDAR_MODEL: ld19
+  WEBOTS_VERSION: R2025a
+  WEBOTS_DEB: webots_2025a_amd64.deb
+
+jobs:
+  sim-smoke:
+    name: Sim smoke test
+    # On pull requests only with the run-sim label (and only when that label is added,
+    # not when some other label is).
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.action == 'labeled' && github.event.label.name == 'run-sim') ||
+      (github.event.action != 'labeled' &&
+       contains(github.event.pull_request.labels.*.name, 'run-sim'))
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - name: Check out (without the Git LFS model files)
+        uses: actions/checkout@v7
+        with:
+          lfs: false
+
+      - name: Install dependencies and build
+        uses: ./.github/actions/ros-workspace
+        with:
+          colcon-args: --packages-up-to ugv_webots
+
+      - name: Restore the Webots installer
+        id: webots-deb
+        uses: actions/cache@v6
+        with:
+          path: ~/webots-deb
+          key: webots-deb-${{ env.WEBOTS_VERSION }}
+
+      - name: Install Webots
+        run: |
+          deb="$HOME/webots-deb/$WEBOTS_DEB"
+          if [ ! -f "$deb" ]; then
+            mkdir -p "$HOME/webots-deb"
+            curl -fsSL -o "$deb" \
+              "https://github.com/cyberbotics/webots/releases/download/$WEBOTS_VERSION/$WEBOTS_DEB"
+          fi
+          sudo apt-get install -y -qq "$deb" xvfb
+          cat /usr/local/webots/resources/version.txt
+
+      # Textures and PROTOs the worlds download from GitHub on their first start.
+      - name: Restore the Webots asset cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/Cyberbotics
+          key: webots-assets-${{ env.WEBOTS_VERSION }}-${{ hashFiles('src/ugv_main/ugv_webots/worlds/*.wbt') }}
+
+      - name: Run the sim smoke test
+        env:
+          WEBOTS_HOME: /usr/local/webots
+          # Fail instead of skipping if Webots is somehow not found.
+          UGV_SIM_TEST: '1'
+          UGV_TEST_ARTIFACTS: ${{ github.workspace }}/sim-artifacts
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          REPEAT: ${{ inputs.repeat || '1' }}
+        run: |
+          source install/setup.bash
+          for i in $(seq "$REPEAT"); do
+            echo "::group::Run $i of $REPEAT"
+            # Webots needs an X server even with --no-rendering (cameras render offscreen).
+            xvfb-run -a -s '-screen 0 1280x1024x24' \
+              colcon test --packages-select ugv_webots --event-handlers console_direct+ \
+              --pytest-args -k sim_smoke
+            colcon test-result --verbose
+            echo "::endgroup::"
+          done
+          { echo '### Sim smoke summary'; echo '```json'; cat sim-artifacts/sim_smoke_summary.json
+            echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload launch logs and camera frames
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: sim-smoke-logs
+          path: |
+            log/
+            ~/.ros/log/
+            build/ugv_webots/pytest.xml
+            sim-artifacts/
+          if-no-files-found: ignore
+          retention-days: 14
