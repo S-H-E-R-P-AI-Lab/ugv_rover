@@ -13,7 +13,8 @@ tests; nothing is deployed. It takes about 10 minutes, most of it installing ROS
 | Test | `colcon test` on our own package `ugv_webots`: flake8, pep257, copyright, xmllint and the unit tests. The sim smoke test skips itself (no Webots on the runner). Upstream and vendored packages are built, not tested. |
 | On failure | Uploads `log/` and the test results as the `ci-logs` artifact. |
 
-`main` requires this check (**Build and test**) to pass before merging.
+To block merges that fail it, make **Build and test** a required status check in a branch
+protection rule for `main` (Settings, Branches). It is not required yet.
 
 ## What CI does not run
 
