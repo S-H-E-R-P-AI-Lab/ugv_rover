@@ -1,0 +1,103 @@
+<?xml version="1.0"?>
+<!--
+  Webots-only additions to the upstream UGV Rover URDF.
+  ugv_webots/description.py appends the children of <robot> below to the URDF
+  generated from ugv_description/urdf/bases/ugv_rover.xacro.
+
+  Topic and frame names mirror ugv_gazebo/config/ros_gz_bridge.yaml and the
+  frames used by the Gazebo sensors (see docs/SIMULATOR.md).
+  Device names ("ld19_lidar", "pt_camera", ...) refer to devices in protos/UgvRover.proto.
+-->
+<robot name="ugv_webots_extras">
+  <webots>
+    <!-- LD19: raw scan, republished on /scan by scan_normalizer in the layout of the real ldlidar driver -->
+    <device reference="ld19_lidar" type="Lidar">
+      <ros>
+        <enabled>true</enabled>
+        <topicName>/ugv_webots/scan_raw</topicName>
+        <frameName>base_lidar_link</frameName>
+        <updateRate>10</updateRate>
+        <alwaysOn>true</alwaysOn>
+      </ros>
+    </device>
+
+    <!-- Pan-tilt USB camera: /image_raw and /camera_info (driver remaps /pt_camera/*) -->
+    <device reference="pt_camera" type="Camera">
+      <ros>
+        <enabled>true</enabled>
+        <topicName>/pt_camera</topicName>
+        <imageSuffix>/image_raw</imageSuffix>
+        <frameName>pt_camera_link</frameName>
+        <updateRate>20</updateRate>
+        <alwaysOn>false</alwaysOn>
+      </ros>
+    </device>
+
+    <!-- OAK-D Lite RGB: /oak/image_raw and /oak/camera_info -->
+    <device reference="oak_rgb" type="Camera">
+      <ros>
+        <enabled>true</enabled>
+        <topicName>/oak</topicName>
+        <imageSuffix>/image_raw</imageSuffix>
+        <frameName>3d_camera_link</frameName>
+        <updateRate>20</updateRate>
+        <alwaysOn>false</alwaysOn>
+      </ros>
+    </device>
+
+    <!-- OAK-D Lite depth: /oak/depth/image_raw (32FC1, metres) and /oak/depth/camera_info.
+         /oak/points is built from these by depth_image_proc in the launch file. -->
+    <device reference="oak_depth" type="RangeFinder">
+      <ros>
+        <enabled>true</enabled>
+        <topicName>/oak/depth</topicName>
+        <imageSuffix>/image_raw</imageSuffix>
+        <frameName>3d_camera_link</frameName>
+        <updateRate>20</updateRate>
+        <alwaysOn>false</alwaysOn>
+      </ros>
+    </device>
+
+    <!-- Ground truth pose of the robot (for evaluating odometry and SLAM; not part of the robot contract) -->
+    <plugin type="ugv_webots.ground_truth.GroundTruthPublisher">
+      <topicName>/ugv_webots/ground_truth</topicName>
+      <updateRate>20</updateRate>
+    </plugin>
+
+    <plugin type="webots_ros2_control::Ros2Control" />
+  </webots>
+
+  <ros2_control name="WebotsControl" type="system">
+    <hardware>
+      <plugin>webots_ros2_control::Ros2ControlSystem</plugin>
+    </hardware>
+    <joint name="left_up_wheel_link_joint">
+      <command_interface name="velocity"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="left_down_wheel_link_joint">
+      <command_interface name="velocity"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="right_up_wheel_link_joint">
+      <command_interface name="velocity"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="right_down_wheel_link_joint">
+      <command_interface name="velocity"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="pt_base_link_to_pt_link1">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+    </joint>
+    <joint name="pt_link1_to_pt_link2">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+    </joint>
+  </ros2_control>
+</robot>
