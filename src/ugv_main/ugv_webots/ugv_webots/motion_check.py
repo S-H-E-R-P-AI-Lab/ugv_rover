@@ -115,12 +115,13 @@ class MotionCheck(Node):
         o1, t1 = self.odom.snapshot(), self.truth.snapshot()
 
         # Rotation leg
+        # Negative turns or a negative angular_speed rotate clockwise.
+        angle = 2.0 * math.pi * self.turns * math.copysign(1.0, self.angular_speed)
         cmd = Twist()
-        cmd.angular.z = self.angular_speed
-        angle = 2.0 * math.pi * self.turns
+        cmd.angular.z = math.copysign(abs(self.angular_speed), angle)
         self.get_logger().info(
-            f'Rotating {math.degrees(angle):.1f} deg at {self.angular_speed:.2f} rad/s')
-        self.spin_for(angle / self.angular_speed, cmd)
+            f'Rotating {math.degrees(angle):.1f} deg at {cmd.angular.z:.2f} rad/s')
+        self.spin_for(abs(angle / self.angular_speed), cmd)
         self.spin_for(self.settle, stop)
         o2, t2 = self.odom.snapshot(), self.truth.snapshot()
 

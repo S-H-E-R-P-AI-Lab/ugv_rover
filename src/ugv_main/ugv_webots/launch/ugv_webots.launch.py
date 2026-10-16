@@ -47,6 +47,7 @@ from ugv_webots.description import webots_urdf
 from ugv_webots.webots_host import patch_webots_ros2
 
 ROBOT_NAME = 'ugv_rover'
+RVIZ_CONFIGS = ['webots', 'description', 'bringup', 'slam_2d', 'slam_3d', 'nav_2d', 'nav_3d']
 
 
 def rviz_config_path(name):
@@ -61,7 +62,7 @@ def rviz_config_path(name):
         'nav_2d': ('ugv_nav', 'view_nav_2d.rviz'),
         'nav_3d': ('ugv_nav', 'view_nav_3d.rviz'),
     }
-    package, filename = choices.get(name, choices['description'])
+    package, filename = choices[name]
     return os.path.join(get_package_share_directory(package), 'rviz', filename)
 
 
@@ -69,6 +70,9 @@ def stop_driver(urdf_file):
     """Send SIGTERM to the driver of this launch (matched by its unique URDF path)."""
     pattern = 'webots_ros2_driver/driver .*' + re.escape(urdf_file)
     subprocess.run(['pkill', '-TERM', '-f', pattern], check=False)
+    # The driver has read the URDF by then; do not leave one file per launch in /tmp.
+    if os.path.exists(urdf_file):
+        os.remove(urdf_file)
     return []
 
 
@@ -198,9 +202,8 @@ def generate_launch_description():
                               description='Start Webots minimized without rendering the 3D view'),
         DeclareLaunchArgument('use_rviz', default_value='false',
                               description='Whether to launch RViz2'),
-        DeclareLaunchArgument('rviz_config', default_value='webots',
-                              description='RViz config: webots, description, bringup, '
-                                          'slam_2d, slam_3d, nav_2d, nav_3d'),
+        DeclareLaunchArgument('rviz_config', default_value='webots', choices=RVIZ_CONFIGS,
+                              description='RViz config: webots (all sensors) or an upstream one'),
         DeclareLaunchArgument('use_oak_points', default_value='true',
                               description='Publish /oak/points from the simulated OAK '
                                           'depth image'),

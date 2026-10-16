@@ -484,6 +484,8 @@ def main():
         motor = f'name "{side}_wheel_link_joint"\n'
         at = text.index(motor)
         pad = ' ' * line_indent(text, at)
+        if motor + pad + 'maxTorque 10000\n' not in text:
+            sys.exit(f'Unexpected urdf2webots motor block for {side}, update generate_proto.py')
         text = text.replace(
             motor + pad + 'maxTorque 10000\n',
             motor + pad + f'maxVelocity {WHEEL_MAX_VELOCITY}\n'
