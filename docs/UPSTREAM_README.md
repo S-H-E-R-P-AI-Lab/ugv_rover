@@ -8,7 +8,7 @@
 
 ## Documentation
 
-Tutorials live in [`docs/`](docs/). On GitHub, open any `.md` file to read the rendered preview — no Wiki or separate site required.
+Tutorials live in [`docs/`](./). On GitHub, open any `.md` file to read the rendered preview — no Wiki or separate site required.
 
 | | |
 |---|---|
@@ -19,30 +19,30 @@ Tutorials live in [`docs/`](docs/). On GitHub, open any `.md` file to read the r
 
 | Section | Page |
 |---------|------|
-| Overview | [docs/index.md](docs/index.md) |
-| ROS2 Basics | [docs/ros2_basics.md](docs/ros2_basics.md) |
-| UGV Basics | [docs/ugv_basics.md](docs/ugv_basics.md) |
-| Installation | [docs/installation.md](docs/installation.md) |
+| Overview | [docs/index.md](index.md) |
+| ROS2 Basics | [docs/ros2_basics.md](ros2_basics.md) |
+| UGV Basics | [docs/ugv_basics.md](ugv_basics.md) |
+| Installation | [docs/installation.md](installation.md) |
 
 ### Tutorials
 
 | Section | Page |
 |---------|------|
-| Robot Description | [docs/description.md](docs/description.md) |
-| Hardware Driver | [docs/bringup.md](docs/bringup.md) |
-| Keyboard & Gamepad Control | [docs/teleoperation.md](docs/teleoperation.md) |
-| LiDAR Interaction | [docs/lidar.md](docs/lidar.md) |
-| Vision | [docs/vision.md](docs/vision.md) |
-| Mapping | [docs/mapping.md](docs/mapping.md) |
-| Web App | [docs/web_app.md](docs/web_app.md) |
-| Navigation | [docs/navigation.md](docs/navigation.md) |
-| Behavior Command Control | [docs/behavior_ctrl.md](docs/behavior_ctrl.md) |
-| Experimental | [docs/experimental.md](docs/experimental.md) |
-| Gazebo | [docs/gazebo.md](docs/gazebo.md) |
+| Robot Description | [docs/description.md](description.md) |
+| Hardware Driver | [docs/bringup.md](bringup.md) |
+| Keyboard & Gamepad Control | [docs/teleoperation.md](teleoperation.md) |
+| LiDAR Interaction | [docs/lidar.md](lidar.md) |
+| Vision | [docs/vision.md](vision.md) |
+| Mapping | [docs/mapping.md](mapping.md) |
+| Web App | [docs/web_app.md](web_app.md) |
+| Navigation | [docs/navigation.md](navigation.md) |
+| Behavior Command Control | [docs/behavior_ctrl.md](behavior_ctrl.md) |
+| Experimental | [docs/experimental.md](experimental.md) |
+| Gazebo | [docs/gazebo.md](gazebo.md) |
 
-Package layout: [docs/packages.md](docs/packages.md)
+Package layout: [docs/packages.md](packages.md)
 
-Suggested order: [docs/index.md — Suggested reading order](docs/index.md#suggested-reading-order).
+Suggested order: [docs/index.md — Suggested reading order](index.md#suggested-reading-order).
 
 **Factory image:** Docker + SSH port **23** (`root`/`ws`). **Camera:** `:8889/cam/`. **Web AI (experimental):** `:5000`.
 
@@ -66,7 +66,7 @@ Inside the container:
 sudo bash build_first.sh
 ```
 
-`build_first.sh` installs dependencies, prompts for `UGV_MODEL` and `LDLIDAR_MODEL`, and runs `colcon build`. Gazebo is optional (default: skip). Details: [Installation](docs/installation.md).
+`build_first.sh` installs dependencies, prompts for `UGV_MODEL` and `LDLIDAR_MODEL`, and runs `colcon build`. Gazebo is optional (default: skip). Details: [Installation](installation.md).
 
 ### Model settings
 
@@ -76,16 +76,16 @@ sudo bash build_first.sh
 | UGV Beast (tracked) | `ugv_beast` | per your kit |
 | RaspRover (4WD) | `rasp_rover` | per your kit |
 
-See [UGV Basics](docs/ugv_basics.md) for AI Kit vs ROS2 Kit naming.
+See [UGV Basics](ugv_basics.md) for AI Kit vs ROS2 Kit naming.
 
 ### Typical real-robot workflow
 
-1. **T0** — robot stack: bringup, SLAM, or Nav2 (each is one launch — see [Typical paths](docs/index.md#typical-paths))
+1. **T0** — robot stack: bringup, SLAM, or Nav2 (each is one launch — see [Typical paths](index.md#typical-paths))
 2. **T1** — teleop while mapping (`keyboard_ctrl` / gamepad), Web App, or **`explore_lite`** — only when the workflow needs a second terminal
 
 Example — teleop only: **T0** `bringup_lidar.launch.py` · **T1** `keyboard_ctrl`. Example — mapping: **T0** `slam_toolbox.launch.py` · **T1** `keyboard_ctrl`.
 
-Simulation: **VM or desktop only** — see [Gazebo](docs/gazebo.md); add `use_sim_time:=true` on SLAM/Nav launches.
+Simulation: **VM or desktop only** — see [Gazebo](gazebo.md); add `use_sim_time:=true` on SLAM/Nav launches.
 
 ## Useful resources
 
