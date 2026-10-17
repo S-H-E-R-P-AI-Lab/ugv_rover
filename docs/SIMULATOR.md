@@ -40,7 +40,7 @@ Arguments of `ugv_webots.launch.py` (see `--show-args`):
 | `headless` | `false` | Start Webots minimized without rendering its 3D view (sensors still render) |
 | `use_rviz` | `false` | Open RViz |
 | `rviz_config` | `webots` | `webots` (all sensors), or the upstream configs `description`, `bringup`, `slam_2d`, `slam_3d`, `nav_2d`, `nav_3d` |
-| `detail` | `high` | Robot visuals: `high` (CAD meshes) or `low` (URDF meshes, faster on weak machines) |
+| `detail` | `high` | Robot visuals: `high` (CAD meshes) or `low` (the previous URDF meshes) |
 | `use_oak_points` | `true` | Build `/oak/points` from the depth image |
 
 The wrappers accept `world`, `use_rviz` (default `true`), `headless` and `detail`. `nav.launch.py`
@@ -373,7 +373,8 @@ R2025a on Windows 11, all sensors active):
 
 The sensors (two 640x480 cameras and a 640x480 depth image at 20 Hz) dominate; rates scale
 with the RTF (for example `/scan` 8.8 to 9.0 Hz for a 10 Hz target). For more speed:
-`use_oak_points:=false`, `headless:=true`, `detail:=low`, or `mode:=fast`.
+`use_oak_points:=false`, `headless:=true`, or `mode:=fast`. `detail:=low` was not faster on our
+machine (table below); it may help where the GPU is very weak.
 
 **High detail model versus the previous model** (same machine, 60 s per run after a 15 s
 settle, three interleaved runs of each model; RTF from `/clock`, load time from the launch

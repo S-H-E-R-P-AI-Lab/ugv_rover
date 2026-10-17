@@ -13,7 +13,7 @@ by hand: change the script or `materials.json` and regenerate (see
 | `webots/manifest.json` | Files, material order, triangle counts, joints, the visual shifts | `generate_proto.py`, tools |
 | `glb/ugv_rover.glb` | The whole robot with the URDF link hierarchy | three.js and other web viewers |
 
-Visuals only: no collision shapes, no masses. About 56k triangles for the whole robot
+Visuals only: no collision shapes, no masses. About 57k triangles for the whole robot
 (per mesh numbers in `webots/manifest.json`).
 
 ## Using the GLB in three.js

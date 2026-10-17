@@ -240,7 +240,7 @@ def generate_launch_description():
                               description='RViz config: webots (all sensors) or an upstream one'),
         DeclareLaunchArgument('detail', default_value='high', choices=['high', 'low'],
                               description='Robot visuals: high (CAD meshes) or low (URDF '
-                                          'meshes, for slow machines)'),
+                                          'meshes, the previous look)'),
         DeclareLaunchArgument('use_oak_points', default_value='true',
                               description='Publish /oak/points from the simulated OAK '
                                           'depth image'),
