@@ -40,6 +40,8 @@ def sim_arguments(default_world='apartment.wbt'):
                               description='Whether to launch RViz2'),
         DeclareLaunchArgument('headless', default_value='false',
                               description='Start Webots minimized without rendering the 3D view'),
+        DeclareLaunchArgument('detail', default_value='high',
+                              description='Robot visuals: high (CAD meshes) or low (URDF meshes)'),
     ]
 
 
@@ -50,6 +52,7 @@ def simulation(rviz_config):
         'use_rviz': LaunchConfiguration('use_rviz'),
         'rviz_config': rviz_config,
         'headless': LaunchConfiguration('headless'),
+        'detail': LaunchConfiguration('detail'),
     })
 
 

@@ -1,0 +1,131 @@
+{
+ "note": "Camera poses fitted to the reference photos by fit_photo_views.py (silhouette IoU of the CAD). World frame: base_footprint at the origin.",
+ "views": [
+  {
+   "name": "front_three_quarter",
+   "photo": "product-1.jpg",
+   "iou": 0.8487,
+   "position": [
+    2.53492,
+    2.9024,
+    1.36551
+   ],
+   "target": [
+    -0.00423,
+    0.00431,
+    0.12842
+   ],
+   "fov": 0.11525,
+   "width": 1600,
+   "height": 1200
+  },
+  {
+   "name": "side_right",
+   "photo": "product-2.jpg",
+   "iou": 0.8889,
+   "position": [
+    -0.15466,
+    -5.15441,
+    0.34339
+   ],
+   "target": [
+    -0.00032,
+    0.00066,
+    0.13162
+   ],
+   "fov": 0.08971,
+   "width": 1600,
+   "height": 1200
+  },
+  {
+   "name": "side_left",
+   "photo": "product-3.jpg",
+   "iou": 0.8964,
+   "position": [
+    -0.05121,
+    2.58501,
+    0.23704
+   ],
+   "target": [
+    -0.00028,
+    0.00016,
+    0.13145
+   ],
+   "fov": 0.17969,
+   "width": 1600,
+   "height": 1200
+  },
+  {
+   "name": "front",
+   "photo": "product-4.jpg",
+   "iou": 0.8374,
+   "position": [
+    3.92787,
+    0.00024,
+    0.30094
+   ],
+   "target": [
+    0.0003,
+    0.00021,
+    0.14046
+   ],
+   "fov": 0.12239,
+   "width": 1600,
+   "height": 1200
+  },
+  {
+   "name": "rear",
+   "photo": "product-5.jpg",
+   "iou": 0.8708,
+   "position": [
+    -5.92248,
+    -0.20724,
+    0.37171
+   ],
+   "target": [
+    0.00066,
+    0.00074,
+    0.13206
+   ],
+   "fov": 0.07887,
+   "width": 1600,
+   "height": 1200
+  },
+  {
+   "name": "top",
+   "photo": "product-6.jpg",
+   "iou": 0.9355,
+   "position": [
+    -0.00013,
+    0.43692,
+    5.10919
+   ],
+   "target": [
+    0.00031,
+    0.0011,
+    0.12778
+   ],
+   "fov": 0.08886,
+   "width": 1600,
+   "height": 1200
+  },
+  {
+   "name": "rear_three_quarter",
+   "photo": "product-7.jpg",
+   "iou": 0.8151,
+   "position": [
+    -1.82013,
+    1.67497,
+    1.15501
+   ],
+   "target": [
+    0.0005,
+    0.00209,
+    0.12748
+   ],
+   "fov": 0.18277,
+   "width": 1600,
+   "height": 1200
+  }
+ ]
+}
