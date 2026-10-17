@@ -53,7 +53,7 @@ Details: [docs/SIMULATOR.md](docs/SIMULATOR.md).
 | [docs/SIMULATOR.md](docs/SIMULATOR.md) | How the Webots simulation works, topics and frames, adding worlds, tuning, known gaps |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Problems we hit and how to fix them |
 | [docs/CI.md](docs/CI.md) | What GitHub Actions checks on each pull request, running the checks locally |
-| [docs/UPSTREAM_CHANGES.md](docs/UPSTREAM_CHANGES.md) | What we changed in Waveshare's files, and how to sync with upstream |
+| [docs/UPSTREAM_CHANGES.md](docs/UPSTREAM_CHANGES.md) | What we changed in the files that came from Waveshare, and why |
 | [docs/UPSTREAM_README.md](docs/UPSTREAM_README.md) | Waveshare's original README, and from there their tutorials for the real robot (bringup, mapping, navigation, vision, web app) |
 
 ## Repository layout
@@ -69,6 +69,11 @@ build_first.sh  Waveshare's install and build script (used on the robot)
 
 ## Branches
 
-* `main`: Waveshare's `ros2-humble-develop-251125` plus our changes. Sync procedure in
-  [docs/UPSTREAM_CHANGES.md](docs/UPSTREAM_CHANGES.md#syncing-with-upstream).
+* `main`: our development branch.
 * Work on feature branches and open pull requests into `main`.
+
+## Origin
+
+This project started from Waveshare's [ugv_ws](https://github.com/waveshareteam/ugv_ws)
+(branch `ros2-humble-develop-251125`, November 2025). It is developed independently: we do
+not sync with it or send changes back.
