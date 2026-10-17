@@ -13,6 +13,7 @@
   <depend>joint_state_publisher_gui</depend>
   <depend>joint_state_publisher</depend>
   <depend>gazebo_ros</depend>
+  <exec_depend>depthai_descriptions</exec_depend>
   <export>
     <architecture_independent />
     <build_type>ament_cmake</build_type>
