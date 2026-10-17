@@ -43,9 +43,7 @@ Outputs (see docs/SIMULATOR.md, "Robot model"):
 Pipeline:
   1. Download the STEP (cached, SHA-256 checked) and tessellate every part with OCP.
   2. Sort the parts into URDF links and materials (RULES); drop screws, nuts and PCB parts.
-  3. Place the parts in their link frames. The URDF frames of the deck sensors and the
-     pan-tilt are lower than in the CAD of the Jetson Orin kit (docs/MODEL_CHANGES.md), so
-     these groups are shifted onto the URDF frames (GROUP_SHIFT) instead of moving frames.
+  3. Place the parts in their link frames (GROUP_SHIFT can move a group onto its frame).
   4. Remove hidden triangles: render the robot from 192 directions with one colour per
      triangle and keep what is seen (plus a one-triangle border to avoid cracks).
   5. Decimate each link to its triangle budget (BUDGET, MeshLab quadric edge collapse),
@@ -151,22 +149,12 @@ GROUP_LINK = {
     'pt_tilt': 'pt_link2',
 }
 
-# Shift of each group in base_link (metres), applied after CAD_TO_BASE. The upstream URDF
-# places the deck sensors and the pan-tilt lower than the CAD of the Jetson Orin kit
-# (measured in docs/MODEL_CHANGES.md). Frames stay as they are, so the visuals are moved:
-#   deck:      deck top 49.6 mm (CAD) onto 40.0 mm (top of the URDF base mesh)
-#   lidar:     LD19 rotation axis (39.8, 0.1) mm and base 50 mm onto the URDF frame
-#   oak:       OAK-D Lite body onto the URDF box (fit residual 0.9 mm)
-#   pt_*:      pan axis x -8.7 mm onto -14.4 mm, tilt axis z 140.6 mm onto 121.3 mm
-GROUP_SHIFT = {
-    'chassis': (0.0, 0.0, 0.0),
-    'deck': (0.0, 0.0, -0.0096),
-    'lidar': (-0.0081, -0.0011, -0.0100),
-    'oak': (-0.0031, 0.0, -0.0101),
-    'pt_base': (-0.0057, 0.0, -0.0193),
-    'pt_pan': (-0.0057, 0.0, -0.0193),
-    'pt_tilt': (-0.0057, 0.0, -0.0193),
-}
+# Shift of each group in base_link (metres), applied after CAD_TO_BASE. Zero since the URDF
+# frames follow the CAD of the Jetson Orin kit (ugv_rover.xacro kit:=jetson_orin, see
+# docs/MODEL_CHANGES.md). If a URDF frame disagrees with the CAD again, shift the visuals of
+# that group onto the frame here so joints turn about the axes you see.
+GROUP_SHIFT = {group: (0.0, 0.0, 0.0) for group in
+               ('chassis', 'deck', 'lidar', 'oak', 'pt_base', 'pt_pan', 'pt_tilt')}
 
 # Triangle budget per output mesh (the wheel mesh is drawn six times).
 BUDGET = {

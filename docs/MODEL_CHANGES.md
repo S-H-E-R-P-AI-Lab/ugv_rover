@@ -6,9 +6,10 @@ model, its visuals from Waveshare's STEP model of the **UGV Rover PT Jetson Orin
 (see [SIMULATOR.md, Robot model](SIMULATOR.md#robot-model)). This page records where the
 two disagree, how it was measured, and what was changed.
 
-**Nothing was changed yet.** No link frame, joint origin, joint axis, sensor pose, mass or
-inertia differs from upstream. The discrepancies below are moved into the URDF in a
-separate pull request, so they can be reviewed on their own.
+**What changed:** the lidar, OAK and pan-tilt frames of `ugv_rover` now follow the CAD
+(table below). Masses, inertias, joint axes, wheel frames and the other robots
+(`rasp_rover`, `ugv_beast`) are unchanged. `ugv_rover.xacro kit:=upstream` restores
+Waveshare's original values (byte for byte the same URDF as before).
 
 ## How it was measured
 
@@ -29,7 +30,7 @@ separate pull request, so they can be reviewed on their own.
 
 ![URDF meshes (red) over the CAD (grey), right side](reference/comparisons/urdf_vs_cad_side.png)
 
-## Results (base_link frame, millimetres)
+## Measured before the change (base_link frame, millimetres)
 
 | Frame or part | URDF | CAD | CAD minus URDF | URDF mesh fit residual |
 |---|---|---|---|---|
@@ -53,15 +54,40 @@ and 6 mm further back. The URDF meshes match the CAD parts almost exactly once s
 parts mounted differently: most likely the Raspberry Pi build of the rover, which has no
 Jetson under the deck (lower standoffs) and shorter pan-tilt standoffs (`M3*35` in this kit).
 
-## What the high detail model does about it
+## Changes to the URDF
 
-The visuals are moved onto the URDF frames instead of moving the frames
-(`GROUP_SHIFT` in `build_rover_meshes.py`): the deck with the antennas and the Jetson
-9.6 mm down, the LD19 and the OAK onto their URDF frames, the whole pan-tilt 5.7 mm back
-and 19.3 mm down (the pan servo sinks into the deck to make room). So joints turn about the
-axes you see, the lidar and the cameras sit where their sensors are, and TF and every
-topic are unchanged. The price: the deck and the head look 10 and 19 mm lower than on the
-real robot.
+`ugv_description/urdf/bases/ugv_rover.xacro` gets an argument `kit` (default
+`jetson_orin`); `ugv_description/urdf/sensors/pt.xacro` gets two optional macro parameters
+(`pt_base_link_joint_pose_x`, `pan_joint_pose_z`) whose defaults are the old values, so the
+other robots that include it are unchanged.
+
+| Joint | Before (`kit:=upstream`) | After (`kit:=jetson_orin`) | Evidence |
+|---|---|---|---|
+| `base_lidar_link_joint` | xyz (0.03170, -0.00102, 0.04) | xyz (0.0398, 0.0001, 0.0500) | LD19 rotation axis and base in the CAD |
+| `oak_base_joint` | xyz (0.06531, 0, 0.021953) | xyz (0.0684, 0, 0.0321) | URDF OAK mesh fitted to the CAD OAK-D Lite (0.9 mm) |
+| `pt_base_link_joint` | xyz (-0.02571, 0, 0.04) | xyz (-0.02001, 0, 0.0496) | pan servo horn axis, deck top in the CAD |
+| `pt_base_link_to_pt_link1` | xyz (0.0113, 0, 0.0383) | xyz (0.0113, 0, 0.0478) | pan bracket fitted to the CAD (0.4 mm) |
+
+Unchanged and confirmed: `pt_link1_to_pt_link2` (tilt axis 0.2 mm from the CAD horn after
+the change), `pt_camera_link_joint` (camera board fit 0.5 mm), all wheel joints, all
+inertials. After the change the URDF meshes sit on the CAD parts within 1 mm (lidar 0.9,
+OAK 0.1, pan bracket 0.1, head 0.9, camera 0.6 mm); only `pt_base_link` stays 4 mm off,
+because its URDF mesh is a shorter pan-tilt base than the kit's.
+
+Effects:
+
+* **Real robot.** `ugv_bringup` builds TF from the same xacro, so on the robot the lidar,
+  OAK and pan-tilt camera frames move by these amounts too (they were wrong by up to 2 cm).
+  A robot with the lower deck (Waveshare's Raspberry Pi build, if that is what the old
+  values describe) should launch with `kit:=upstream`.
+* **Simulation.** The sensors move with their frames: the lidar scan plane is 10 mm higher,
+  the cameras 10 and 19 mm higher. Driving is unchanged (`motion_check`: 1.000 m forward,
+  360.3 / 359.7 degrees odometry / truth for a full turn, as before). The combined body's
+  centre of mass moves by 0.6 mm.
+* **High detail visuals.** `GROUP_SHIFT` in `build_rover_meshes.py` is zero now: the CAD
+  parts sit where the CAD puts them and joints turn about the axes you see.
+* **Low detail visuals.** The URDF base mesh still has the lower deck, so in `detail:=low`
+  the lidar, OAK and pan-tilt meshes float about 10 mm above it.
 
 ## Drivetrain: six wheels, four joints
 

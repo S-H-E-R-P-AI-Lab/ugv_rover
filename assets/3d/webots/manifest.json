@@ -10,32 +10,32 @@
   "deck": [
    0.0,
    0.0,
-   -0.0096
+   0.0
   ],
   "lidar": [
-   -0.0081,
-   -0.0011,
-   -0.01
+   0.0,
+   0.0,
+   0.0
   ],
   "oak": [
-   -0.0031,
    0.0,
-   -0.0101
+   0.0,
+   0.0
   ],
   "pt_base": [
-   -0.0057,
    0.0,
-   -0.0193
+   0.0,
+   0.0
   ],
   "pt_pan": [
-   -0.0057,
    0.0,
-   -0.0193
+   0.0,
+   0.0
   ],
   "pt_tilt": [
-   -0.0057,
    0.0,
-   -0.0193
+   0.0,
+   0.0
   ]
  },
  "links": {
@@ -51,15 +51,15 @@
     "pcb"
    ],
    "triangles": {
-    "anodized": 9612,
-    "plastic": 8388,
-    "steel": 4152,
-    "gold": 501,
-    "lens": 615,
-    "led": 188,
-    "pcb": 537
+    "anodized": 8661,
+    "plastic": 9332,
+    "steel": 4007,
+    "gold": 469,
+    "lens": 540,
+    "led": 162,
+    "pcb": 822
    },
-   "cad_triangles_after_culling": 206885
+   "cad_triangles_after_culling": 261101
   },
   "base_lidar_link": {
    "file": "base_lidar_link.dae",
@@ -67,9 +67,9 @@
     "plastic"
    ],
    "triangles": {
-    "plastic": 3341
+    "plastic": 3323
    },
-   "cad_triangles_after_culling": 20089
+   "cad_triangles_after_culling": 20211
   },
   "oak_base": {
    "file": "oak_base.dae",
@@ -78,10 +78,10 @@
     "lens"
    ],
    "triangles": {
-    "plastic": 1448,
-    "lens": 59
+    "plastic": 1431,
+    "lens": 68
    },
-   "cad_triangles_after_culling": 20718
+   "cad_triangles_after_culling": 20272
   },
   "pt_base_link": {
    "file": "pt_base_link.dae",
@@ -91,11 +91,11 @@
     "steel"
    ],
    "triangles": {
-    "anodized": 1345,
-    "plastic": 1534,
-    "steel": 620
+    "anodized": 1306,
+    "plastic": 1584,
+    "steel": 606
    },
-   "cad_triangles_after_culling": 23752
+   "cad_triangles_after_culling": 24799
   },
   "pt_link1": {
    "file": "pt_link1.dae",
@@ -116,8 +116,8 @@
     "pcb"
    ],
    "triangles": {
-    "anodized": 2473,
-    "plastic": 2635,
+    "anodized": 2474,
+    "plastic": 2636,
     "steel": 771,
     "pcb": 114
    },
@@ -170,9 +170,9 @@
     0.0
    ],
    "origin_xyz": [
-    0.0317,
-    -0.00102,
-    0.04
+    0.0398,
+    0.0001,
+    0.05
    ]
   },
   "oak_base": {
@@ -185,9 +185,9 @@
     0.0
    ],
    "origin_xyz": [
-    0.06531,
+    0.0684,
     0.0,
-    0.021953
+    0.0321
    ]
   },
   "3d_camera_link": {
@@ -215,9 +215,9 @@
     0.0
    ],
    "origin_xyz": [
-    -0.02571,
+    -0.02001,
     0.0,
-    0.04
+    0.0496
    ]
   },
   "pt_link1": {
@@ -232,7 +232,7 @@
    "origin_xyz": [
     0.0113,
     0.0,
-    0.0383
+    0.0478
    ]
   },
   "pt_link2": {

@@ -35,5 +35,5 @@ const wheel = gltf.scene.getObjectByName('left_up_wheel_link');  // rotate about
   transform is the URDF joint origin, joints at zero. `left_mid_wheel` and
   `right_mid_wheel` are the unpowered middle wheels (fixed to the chassis, spin them with
   the others if you like).
-* Positions follow the URDF frames, not the CAD: the deck and the pan-tilt are drawn 10 and
-  19 mm lower than on the real kit (see [docs/MODEL_CHANGES.md](../../docs/MODEL_CHANGES.md)).
+* Positions follow the CAD and the URDF of the Jetson Orin kit (`ugv_rover.xacro`
+  `kit:=jetson_orin`, see [docs/MODEL_CHANGES.md](../../docs/MODEL_CHANGES.md)).

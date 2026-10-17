@@ -48,7 +48,7 @@ PROTO UgvRover [
           ]
         }
         Pose {
-          translation 0.0317 -0.00102 0.1385
+          translation 0.0398 0.0001 0.1485
           rotation 0.000000 0.000000 1.000000 1.570800
           children [
             Box {
@@ -57,7 +57,7 @@ PROTO UgvRover [
           ]
         }
         Pose {
-          translation 0.07381 0 0.102953
+          translation 0.0769 0 0.1131
           children [
             Box {
               size 0.017 0.091 0.028
@@ -65,7 +65,7 @@ PROTO UgvRover [
           ]
         }
         Pose {
-          translation -0.026818 0 0.1395
+          translation -0.021118 0 0.1491
           children [
             Box {
               size 0.064 0.042 0.037
@@ -77,10 +77,10 @@ PROTO UgvRover [
     physics Physics {
       density -1
       mass 2.335560
-      centerOfMass [ 0.000963 -0.000014 0.064888 ]
+      centerOfMass [ 0.001315 0.000001 0.065522 ]
       inertiaMatrix [
-        1.309743e-02 1.468303e-02 2.101135e-02
-        1.028755e-06 -4.955765e-05 2.453688e-06
+        1.329889e-02 1.490156e-02 2.102835e-02
+        -1.262814e-07 -1.355673e-04 -2.712915e-07
       ]
     }
     children [
@@ -231,7 +231,7 @@ PROTO UgvRover [
           }
           %< } >%
           Pose {
-            translation 0.031700 -0.001020 0.040000
+            translation 0.039800 0.000100 0.050000
             rotation 0.000000 0.000000 1.000000 1.570800
             children [
               Lidar {
@@ -271,7 +271,7 @@ PROTO UgvRover [
             ]
           }
           Pose {
-            translation 0.065310 0.000000 0.021953
+            translation 0.068400 0.000000 0.032100
             children [
               Camera {
                 name "oak_rgb"
@@ -321,7 +321,7 @@ PROTO UgvRover [
             ]
           }
           Pose {
-            translation -0.025710 0.000000 0.040000
+            translation -0.020010 0.000000 0.049600
             children [
               Pose {
                 rotation 0.000000 0.000000 1.000000 3.141593
@@ -365,7 +365,7 @@ PROTO UgvRover [
               HingeJoint {
                 jointParameters HingeJointParameters {
                   axis 0.000000 0.000000 1.000000
-                  anchor 0.011300 0.000000 0.038300
+                  anchor 0.011300 0.000000 0.047800
                 }
                 device [
                   RotationalMotor {
@@ -380,7 +380,7 @@ PROTO UgvRover [
                   }
                 ]
                 endPoint Solid {
-                  translation 0.011300 0.000000 0.038300
+                  translation 0.011300 0.000000 0.047800
                   children [
                     %< if (fields.detail.value === 'low') { >%
                     Shape {

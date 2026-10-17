@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <robot name="pt" xmlns:xacro="http://www.ros.org/wiki/xacro">
-<xacro:macro name="pt" params="use_gazebo GZ_VERSION pt_base_link_joint_pose_z initial_positions_file">
+<xacro:macro name="pt" params="use_gazebo GZ_VERSION pt_base_link_joint_pose_z initial_positions_file pt_base_link_joint_pose_x:=-0.02571 pan_joint_pose_z:=0.0383">
 
 <xacro:property name="initial_positions" value="${load_yaml(initial_positions_file)['initial_positions']}"/>
 
@@ -89,14 +89,14 @@
 </link>
 
 <joint name="pt_base_link_joint" type="fixed">
-  <origin xyz="-0.02571 0 ${pt_base_link_joint_pose_z}" rpy="0 0 0" />
+  <origin xyz="${pt_base_link_joint_pose_x} 0 ${pt_base_link_joint_pose_z}" rpy="0 0 0" />
   <parent link="base_link" />
   <child link="pt_base_link" />
   <axis xyz="0 0 0" />
 </joint>
 
 <joint name="pt_base_link_to_pt_link1" type="revolute">
-  <origin xyz="0.0113 0 0.0383" rpy="0 0 0" />
+  <origin xyz="0.0113 0 ${pan_joint_pose_z}" rpy="0 0 0" />
   <parent link="pt_base_link" />
   <child link="pt_link1" />
   <axis xyz="0 0 1" />
