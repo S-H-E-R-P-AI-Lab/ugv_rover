@@ -1,11 +1,15 @@
 # Checks pull requests to main and pushes to main: installs everything on a fresh Ubuntu 22.04
 # through scripts/setup_ubuntu.sh, builds the whole workspace and runs the tests of our own
-# packages. See docs/CI.md.
+# packages. Pull requests that only change docs skip it; pushes to main always run it.
+# quick-check.yml runs the fast checks on every pull request. See docs/CI.md.
 name: CI
 
 on:
   pull_request:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
   push:
     branches: [main]
   workflow_dispatch:
