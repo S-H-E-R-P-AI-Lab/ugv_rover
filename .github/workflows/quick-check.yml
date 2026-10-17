@@ -42,11 +42,11 @@ jobs:
           lfs: false
 
       # Neither package compiles anything, so only their buildtool and test dependencies,
-      # plus xacro to parse the description.
+      # plus xacro and the OAK camera macros (depthai_descriptions) to parse the description.
       - name: Install the dependencies
         run: |
           apt-get update -qq
-          apt-get install -y -qq shellcheck ros-humble-xacro
+          apt-get install -y -qq shellcheck ros-humble-xacro ros-humble-depthai-descriptions
           rosdep update --rosdistro humble
           rosdep install -y --rosdistro humble --ignore-src -t buildtool -t test \
             --from-paths $PACKAGE_PATHS
