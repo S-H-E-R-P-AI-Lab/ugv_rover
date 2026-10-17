@@ -19,8 +19,9 @@
 
 <!-- kit: "jetson_orin" (default) places the deck sensors and the pan-tilt as on the
      UGV Rover PT Jetson Orin ROS2 Kit, measured on Waveshare's STEP model
-     (docs/MODEL_CHANGES.md). "upstream" keeps Waveshare's original values. -->
-<xacro:arg name="kit" default="jetson_orin"/>
+     (docs/MODEL_CHANGES.md). "upstream" keeps Waveshare's original values. The
+     default comes from the UGV_KIT environment variable, like UGV_MODEL. -->
+<xacro:arg name="kit" default="$(optenv UGV_KIT jetson_orin)"/>
 <xacro:property name="kit" value="$(arg kit)"/>
 
 <xacro:arg name="robot_namespace" default="/" />
