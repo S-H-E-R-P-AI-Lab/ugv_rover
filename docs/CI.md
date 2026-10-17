@@ -8,7 +8,7 @@ tests; nothing is deployed. It takes about 10 minutes, most of it installing ROS
 |---|---|
 | Check out | Without the Git LFS files (`lfs: false`): the speech and vision model weights are only copied at build time, and LFS bandwidth is limited. |
 | Lint shell scripts | `shellcheck -S warning scripts/*.sh` |
-| Install | [`scripts/setup_ubuntu.sh --no-build --no-upgrade --no-lfs`](../scripts/setup_ubuntu.sh) on a fresh `ubuntu-22.04` runner, so every pull request also tests the setup script. Then `rosdep install` must resolve every key (only `cmake_modules` is skipped, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md)). Shared setup: [`.github/actions/ros-workspace`](../.github/actions/ros-workspace/action.yml). |
+| Install | [`scripts/setup_ubuntu.sh --no-build --no-upgrade --no-lfs`](../scripts/setup_ubuntu.sh) on a fresh `ubuntu-22.04` runner, so every pull request also tests the setup script. Then `rosdep install` must resolve every key (only `cmake_modules` is skipped, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md)). |
 | Build | The whole workspace with `colcon build`, using ccache (keyed on every `package.xml` and `CMakeLists.txt`). |
 | Test | `colcon test` on our own package `ugv_webots`: flake8, pep257, copyright, xmllint and the unit tests. The sim smoke test skips itself (no Webots on the runner). Upstream and vendored packages are built, not tested. |
 | On failure | Uploads `log/` and the test results as the `ci-logs` artifact. |
