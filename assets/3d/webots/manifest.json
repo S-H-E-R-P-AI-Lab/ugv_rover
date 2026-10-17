@@ -139,11 +139,6 @@
      "color": "tire_color.png"
     }
    },
-   "mirror_for": [
-    "right_up_wheel_link",
-    "right_down_wheel_link",
-    "right_mid_wheel"
-   ],
    "middle_wheels": {
     "left_mid_wheel": [
      0.0,

@@ -267,7 +267,8 @@ def fetch_step(step_arg):
     zpath = os.path.join(CACHE, 'step.zip')
     if not os.path.exists(zpath):
         print(f'Downloading {STEP_URL}')
-        urllib.request.urlretrieve(STEP_URL, zpath)
+        urllib.request.urlretrieve(STEP_URL, zpath + '.part')
+        os.replace(zpath + '.part', zpath)  # an interrupted download leaves only the .part
     digest = hashlib.sha256(open(zpath, 'rb').read()).hexdigest()
     if digest != STEP_ZIP_SHA256:
         sys.exit(f'{zpath}: SHA-256 {digest} does not match {STEP_ZIP_SHA256}. '
@@ -878,8 +879,6 @@ def main():
         for mat in sorted(by_mat, key=lambda m: list(materials).index(m)):
             v, f = weld(*trimesh.util.append_faces([x[0] for x in by_mat[mat]],
                                                    [x[1] for x in by_mat[mat]]))
-            if os.environ.get('UGV_MESH_DUMP'):
-                np.savez(os.path.join(os.environ['UGV_MESH_DUMP'], f'{link}_{mat}.npz'), v=v, f=f)
             target = max(60, int(BUDGET[link] * weights[mat] / wsum))
             v, f = decimate(v, f, min(target, counts[mat]))
             f = f[~inner_walls(link, v, f)]  # decimation can make new ones
@@ -909,8 +908,6 @@ def main():
                                   'triangles': {'rubber': len(f1), 'hub': len(f2)},
                                   'textures': {'rubber': {'normal': 'tire_normal.png',
                                                           'color': 'tire_color.png'}},
-                                  'mirror_for': ['right_up_wheel_link', 'right_down_wheel_link',
-                                                 'right_mid_wheel'],
                                   'middle_wheels': MIDDLE_WHEELS}
     report.append(('wheel (x6)', len(f1) + len(f2), {'rubber': len(f1), 'hub': len(f2)}))
 
