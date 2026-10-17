@@ -1,0 +1,89 @@
+# Fast checks for pull requests to main and pushes to main, in the ROS 2 Humble container:
+# shellcheck, build and test ugv_webots, and parse the robot description. This is the check
+# to require for merging; ci.yml runs the full build. See docs/CI.md.
+#
+# It lives in its own workflow because ci.yml skips docs-only pull requests (paths-ignore
+# applies to a whole workflow), and a required check must report on every pull request.
+name: Quick check
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: quick-check-${{ github.head_ref || github.ref }}
+  # A new push to a pull request replaces its running check; every commit on main is checked.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  # colcon only sees these two, so it does not expect ugv_webots' other workspace
+  # dependencies (ugv_slam, cartographer and so on) to be built.
+  PACKAGE_PATHS: src/ugv_main/ugv_description src/ugv_main/ugv_webots
+
+jobs:
+  quick-check:
+    name: Quick check
+    runs-on: ubuntu-22.04
+    container: ros:humble-ros-base
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out (without the Git LFS model files)
+        uses: actions/checkout@v7
+        with:
+          lfs: false
+
+      # Neither package compiles anything, so only their buildtool and test dependencies,
+      # plus xacro and the OAK camera macros (depthai_descriptions) to parse the description.
+      - name: Install the dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq shellcheck ros-humble-xacro ros-humble-depthai-descriptions
+          rosdep update --rosdistro humble
+          rosdep install -y --rosdistro humble --ignore-src -t buildtool -t test \
+            --from-paths $PACKAGE_PATHS
+
+      - name: Lint shell scripts
+        run: shellcheck -S warning scripts/*.sh
+
+      - name: Build ugv_description and ugv_webots
+        run: |
+          source /opt/ros/humble/setup.bash
+          colcon build --base-paths $PACKAGE_PATHS \
+            --packages-select ugv_description ugv_webots --event-handlers console_cohesion+
+
+      # No Webots in the container, so the sim smoke test skips itself.
+      - name: Test ugv_webots
+        run: |
+          source install/setup.bash
+          colcon test --base-paths $PACKAGE_PATHS \
+            --packages-select ugv_webots --event-handlers console_cohesion+
+          colcon test-result --verbose
+
+      - name: Parse the robot descriptions
+        run: |
+          source install/setup.bash
+          for model in ugv_rover rasp_rover ugv_beast; do
+            echo "xacro $model.xacro"
+            xacro "src/ugv_main/ugv_description/urdf/bases/$model.xacro" > /dev/null
+          done
+
+      - name: Upload logs and test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: quick-check-logs
+          path: |
+            log/
+            build/*/pytest.xml
+            build/*/test_results/
+          if-no-files-found: ignore
+          retention-days: 14
