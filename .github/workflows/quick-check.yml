@@ -21,6 +21,11 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  # colcon only sees these two, so it does not expect ugv_webots' other workspace
+  # dependencies (ugv_slam, cartographer and so on) to be built.
+  PACKAGE_PATHS: src/ugv_main/ugv_description src/ugv_main/ugv_webots
+
 jobs:
   quick-check:
     name: Quick check
@@ -44,7 +49,7 @@ jobs:
           apt-get install -y -qq shellcheck ros-humble-xacro
           rosdep update --rosdistro humble
           rosdep install -y --rosdistro humble --ignore-src -t buildtool -t test \
-            --from-paths src/ugv_main/ugv_description src/ugv_main/ugv_webots
+            --from-paths $PACKAGE_PATHS
 
       - name: Lint shell scripts
         run: shellcheck -S warning scripts/*.sh
@@ -52,14 +57,15 @@ jobs:
       - name: Build ugv_description and ugv_webots
         run: |
           source /opt/ros/humble/setup.bash
-          colcon build --packages-select ugv_description ugv_webots \
-            --event-handlers console_cohesion+
+          colcon build --base-paths $PACKAGE_PATHS \
+            --packages-select ugv_description ugv_webots --event-handlers console_cohesion+
 
       # No Webots in the container, so the sim smoke test skips itself.
       - name: Test ugv_webots
         run: |
           source install/setup.bash
-          colcon test --packages-select ugv_webots --event-handlers console_cohesion+
+          colcon test --base-paths $PACKAGE_PATHS \
+            --packages-select ugv_webots --event-handlers console_cohesion+
           colcon test-result --verbose
 
       - name: Parse the robot descriptions
