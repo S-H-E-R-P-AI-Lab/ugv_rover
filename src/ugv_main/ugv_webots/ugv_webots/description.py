@@ -73,6 +73,8 @@ def upstream_urdf(model='ugv_rover'):
         doc = xacro.process_file(tmp.name, mappings={
             'use_gazebo': 'true',
             'GZ_VERSION': 'webots',
+            # The PROTO and the meshes are built for these frames, whatever UGV_KIT says.
+            'kit': 'jetson_orin',
             'urdf_extras': os.path.join(bases, 'empty.urdf'),
         })
     finally:

@@ -23,6 +23,10 @@
      default comes from the UGV_KIT environment variable, like UGV_MODEL. -->
 <xacro:arg name="kit" default="$(optenv UGV_KIT jetson_orin)"/>
 <xacro:property name="kit" value="$(arg kit)"/>
+<xacro:unless value="${kit in ['jetson_orin', 'upstream']}">
+<!-- Fails with "unknown macro name" naming the allowed values. -->
+<xacro:error_kit_must_be_jetson_orin_or_upstream/>
+</xacro:unless>
 
 <xacro:arg name="robot_namespace" default="/" />
 <xacro:arg name="urdf_extras" default="empty.urdf" />
