@@ -25,7 +25,7 @@ Starts Webots on a studio world (white background, office light probe, light gre
 key and fill lights),
 puts the robot at the origin with every joint at zero, and saves one PNG per view from a
 Camera moved by a supervisor. A view is {"name", "position": [x, y, z],
-"target": [x, y, z], "fov": horizontal rad, "width", "height", optional "pan", "tilt"}.
+"target": [x, y, z], "fov": horizontal rad, "width", "height"}.
 Webots' own messages go to <out>/webots.log.
 """
 
@@ -165,7 +165,10 @@ def main():
     with open(world, 'w') as f:
         f.write(WORLD.format(bg=BACKGROUNDS, detail=args.detail, width=width, height=height,
                              light=args.light, luminosity=args.luminosity, floor=args.floor))
-    webots_home = os.environ.get('WEBOTS_HOME', '/usr/local/webots')
+    from webots_ros2_driver.utils import get_webots_home
+    webots_home = get_webots_home()
+    if not webots_home:
+        sys.exit('Webots not found: set WEBOTS_HOME (see docs/setup/).')
     if is_wsl():
         exe = os.path.join(webots_home, 'msys64', 'mingw64', 'bin', 'webots.exe')
         world_arg = subprocess.check_output(['wslpath', '-w', world]).decode().strip()
