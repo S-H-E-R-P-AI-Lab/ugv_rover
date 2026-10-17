@@ -1,8 +1,9 @@
 # Changes to upstream files
 
-`main` tracks Waveshare's `ros2-humble-develop-251125` branch
-(https://github.com/waveshareteam/ugv_ws). We keep upstream packages untouched where
-possible so merges stay easy. Everything we added lives in new files:
+This repository started from Waveshare's `ros2-humble-develop-251125` branch
+(https://github.com/waveshareteam/ugv_ws) and is developed independently; we do not sync
+with it. We still keep Waveshare's packages untouched where possible, so their code stays
+easy to compare with the original. Everything we added lives in new files:
 `src/ugv_main/ugv_webots/`, `docs/ROS2_PRIMER.md`, `docs/SIMULATOR.md`,
 `docs/TROUBLESHOOTING.md`, `docs/setup/`, `docs/UPSTREAM_CHANGES.md`, `docs/CI.md`, `scripts/`,
 `.github/` (CI workflows and the pull request template).
@@ -31,27 +32,3 @@ files of `ugv_slam` and `ugv_nav` as they are.
 | The chassis mesh `ugv_rover_base.stl` reaches the ground (it contains the side frames and six wheels), so it cannot be used for collisions. | The generated PROTO uses two collision boxes that clear the wheels. |
 | The pan-tilt camera frame `pt_camera_link` and the Gazebo OAK frame are not optical frames (x forward), though images are stamped with them. | Kept as is for compatibility, documented in [SIMULATOR.md](SIMULATOR.md#known-gaps-versus-the-real-robot). |
 | `rf2o_laser_odometry/package.xml` depends on `cmake_modules`, a ROS 1 package with no Humble rosdep rule. | Harmless: rosdep reports it, the package builds fine without it. |
-
-## Syncing with upstream
-
-```bash
-cd ~/ugv_rover
-git fetch upstream
-git checkout main
-git merge upstream/ros2-humble-develop-251125
-# resolve conflicts if any, most likely in README.md, build_first.sh or build_common.sh
-colcon build --symlink-install
-source install/setup.bash
-python3 src/ugv_main/ugv_webots/scripts/generate_proto.py   # if ugv_description changed
-git push origin main
-```
-
-After a merge, check:
-
-1. `git diff HEAD@{1} -- src/ugv_main/ugv_description src/ugv_main/ugv_gazebo/config/ros_gz_bridge.yaml`
-   shows whether the robot model or the simulated topic contract changed upstream. If the
-   bridge file changed, update `resource/webots_extras.urdf` and the launch remappings to
-   match, and the table in [SIMULATOR.md](SIMULATOR.md).
-2. If the xacro changed, regenerate the PROTO (command above). The script stops with a clear
-   message if the Gazebo include block it removes has changed shape.
-3. Run the checks in [SIMULATOR.md](SIMULATOR.md#checking-the-simulator) before pushing.
