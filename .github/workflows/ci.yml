@@ -1,6 +1,6 @@
-# Required check on pull requests to main. Builds the whole workspace on a fresh
-# Ubuntu 22.04 (through scripts/setup_ubuntu.sh) and runs the tests of our own packages.
-# See docs/CI.md.
+# Checks pull requests to main and pushes to main: installs everything on a fresh Ubuntu 22.04
+# through scripts/setup_ubuntu.sh, builds the whole workspace and runs the tests of our own
+# packages. See docs/CI.md.
 name: CI
 
 on:
@@ -12,7 +12,8 @@ on:
 
 concurrency:
   group: ci-${{ github.head_ref || github.ref }}
-  cancel-in-progress: true
+  # A new push to a pull request replaces its running check; every commit on main is checked.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -27,7 +28,7 @@ jobs:
   build-test:
     name: Build and test
     runs-on: ubuntu-22.04
-    timeout-minutes: 90
+    timeout-minutes: 30
     steps:
       - name: Check out (without the Git LFS model files)
         uses: actions/checkout@v7
@@ -37,14 +38,59 @@ jobs:
       - name: Lint shell scripts
         run: shellcheck -S warning scripts/*.sh
 
-      - name: Install dependencies and build
-        uses: ./.github/actions/ros-workspace
-
-      - name: Confirm the build did not need the LFS model files
+      # The runner image ships LLVM's libunwind-NN-dev (with Clang), which conflicts with
+      # Ubuntu's libunwind-dev that libgoogle-glog-dev (Cartographer) needs.
+      - name: Remove the runner's conflicting libunwind packages
         run: |
-          pointers=$(git lfs ls-files -n | while read -r f; do
-            head -c 100 "$f" | grep -q 'git-lfs.github.com/spec' && echo "$f"; done | wc -l)
-          echo "$pointers of $(git lfs ls-files -n | wc -l) LFS files are pointers in this build"
+          conflicting=$( (dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' 'libunwind-*' || true) \
+            | awk '$1 == "ii" && $2 ~ /^libunwind-[0-9]+-dev$/ {print $2}')
+          if [ -n "$conflicting" ]; then
+            echo "Removing: $conflicting"
+            # shellcheck disable=SC2086
+            sudo apt-get remove -y -qq $conflicting
+          fi
+
+      - name: Install ROS 2 Humble and the workspace dependencies
+        run: bash scripts/setup_ubuntu.sh --no-build --no-upgrade --no-lfs
+
+      - name: Check that rosdep resolves every dependency
+        # cmake_modules is a ROS 1 key from rf2o_laser_odometry, harmless (docs/TROUBLESHOOTING.md).
+        run: |
+          rosdep install --from-paths src --ignore-src -y --rosdistro humble \
+            --skip-keys cmake_modules
+
+      - name: Install ccache
+        run: sudo apt-get install -y -qq ccache
+
+      # ccache is content addressed, so any earlier cache helps; the commit in the key saves
+      # an updated cache after each run.
+      - name: Restore the ccache
+        id: ccache
+        uses: actions/cache/restore@v6
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-${{ runner.arch }}-${{ github.sha }}
+          restore-keys: ccache-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Build the workspace
+        env:
+          CCACHE_BASEDIR: ${{ github.workspace }}
+          CCACHE_MAXSIZE: 1G
+        run: |
+          export CCACHE_DIR="$HOME/.cache/ccache"
+          ccache --zero-stats >/dev/null
+          source /opt/ros/humble/setup.bash
+          colcon build --event-handlers console_cohesion+ \
+            --cmake-args -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          ccache --show-stats
+
+      - name: Save the ccache
+        if: always() && steps.ccache.outcome == 'success' && steps.ccache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ~/.cache/ccache
+          key: ${{ steps.ccache.outputs.cache-primary-key }}
 
       - name: Test our packages
         run: |
