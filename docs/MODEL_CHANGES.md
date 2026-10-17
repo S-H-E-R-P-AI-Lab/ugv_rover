@@ -81,7 +81,8 @@ Effects:
   OAK and pan-tilt camera frames move by these amounts too (they were wrong by up to 2 cm).
   A robot with the lower deck (Waveshare's Raspberry Pi build, if that is what the old
   values describe) should set `export UGV_KIT=upstream` next to `UGV_MODEL`.
-* **Simulation.** The sensors move with their frames: the lidar scan plane is 10 mm higher,
+* **Simulation.** The simulator always uses `kit:=jetson_orin`, whatever `UGV_KIT` says,
+  because its PROTO and meshes are built for those frames. The sensors move with their frames: the lidar scan plane is 10 mm higher,
   the cameras 10 and 19 mm higher. Driving is unchanged (`motion_check`: 1.000 m forward,
   360.3 / 359.7 degrees odometry / truth for a full turn, as before). The combined body's
   centre of mass moves by 0.6 mm.
