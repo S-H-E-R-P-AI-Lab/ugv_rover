@@ -1,20 +1,52 @@
 # Continuous integration
 
-One GitHub Actions workflow, [CI](../.github/workflows/ci.yml), checks every pull request to
-`main` and every push to `main` (and runs on demand from the Actions tab). It only builds and
-tests; nothing is deployed. It takes about 10 minutes, most of it installing ROS 2.
+Two GitHub Actions jobs check every pull request to `main` and every push to `main` (both
+also run on demand from the Actions tab). They run in parallel. They only build and test;
+nothing is deployed.
+
+| Job | Workflow | Runs on | Time (measured) |
+|---|---|---|---|
+| **Quick check** | [quick-check.yml](../.github/workflows/quick-check.yml) | Every pull request, every push to `main` | About 1.5 minutes |
+| **Build and test** | [ci.yml](../.github/workflows/ci.yml) | Pull requests that change more than docs, every push to `main` | About 7 minutes, 5 of them installing ROS 2 |
+
+Both check out without the Git LFS files (`lfs: false`): the speech and vision model weights
+are only copied at build time, and LFS bandwidth is limited. On failure, both upload `log/`
+and the test results as an artifact (`quick-check-logs` or `ci-logs`).
+
+### Quick check
+
+Runs in the official `ros:humble-ros-base` container, so ROS is already installed.
 
 | Step | What |
 |---|---|
-| Check out | Without the Git LFS files (`lfs: false`): the speech and vision model weights are only copied at build time, and LFS bandwidth is limited. |
+| Install | `shellcheck`, `xacro` and `depthai_descriptions` (the OAK camera macros the description includes), then `rosdep install` of the buildtool and test dependencies of `ugv_description` and `ugv_webots` (the ament linters, pytest, launch_testing and so on). |
 | Lint shell scripts | `shellcheck -S warning scripts/*.sh` |
-| Install | [`scripts/setup_ubuntu.sh --no-build --no-upgrade --no-lfs`](../scripts/setup_ubuntu.sh) on a fresh `ubuntu-22.04` runner, so every pull request also tests the setup script. Then `rosdep install` must resolve every key (only `cmake_modules` is skipped, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md)). |
-| Build | The whole workspace with `colcon build`, using ccache (keyed on every `package.xml` and `CMakeLists.txt`). |
-| Test | `colcon test` on our own package `ugv_webots`: flake8, pep257, copyright, xmllint and the unit tests. The sim smoke test skips itself (no Webots on the runner). Upstream and vendored packages are built, not tested. |
-| On failure | Uploads `log/` and the test results as the `ci-logs` artifact. |
+| Build | `colcon build` of `ugv_description` and `ugv_webots` only (`--base-paths` hides the other packages from colcon). |
+| Test | `colcon test` on `ugv_webots`: flake8, pep257, copyright, xmllint and the unit tests. The sim smoke test skips itself (no Webots). |
+| Parse the robot description | `xacro` on `ugv_rover.xacro`, `rasp_rover.xacro` and `ugv_beast.xacro`; any error fails the job. |
 
-To block merges that fail it, make **Build and test** a required status check in a branch
-protection rule for `main` (Settings, Branches). It is not required yet.
+### Build and test
+
+Installs everything on a fresh `ubuntu-22.04` runner, like a new team laptop.
+
+| Step | What |
+|---|---|
+| Lint shell scripts | `shellcheck -S warning scripts/*.sh` |
+| Install | [`scripts/setup_ubuntu.sh --no-build --no-upgrade --no-lfs`](../scripts/setup_ubuntu.sh), so it also tests the setup script. Then `rosdep install` must resolve every key (only `cmake_modules` is skipped, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md)). |
+| Build | The whole workspace with `colcon build`, using ccache (restored from the latest earlier run, saved after each run). |
+| Test | `colcon test` on our own package `ugv_webots`, as in Quick check. Upstream and vendored packages are built, not tested. |
+
+Pull requests that only change `docs/**` or `**/*.md` skip it (`paths-ignore`). Pushes to
+`main` always run it. Quick check is a separate workflow because `paths-ignore` skips a whole
+workflow, and a required check has to report on every pull request.
+
+### Required check
+
+The plan is to make **Quick check** the required status check for merging into `main`, and
+keep **Build and test** informational: it still runs and shows its result, but does not block
+a merge. Neither is required yet. To set it up: Settings, Branches, the branch protection
+rule for `main` (or Settings, Rules, Rulesets), turn on **Require status checks to pass
+before merging** and add **Quick check** (only that one).
 
 ## What CI does not run
 
@@ -34,6 +66,7 @@ source install/setup.bash
 colcon test --packages-select ugv_webots --event-handlers console_direct+   # linters, unit tests, sim smoke test
 colcon test-result --verbose
 shellcheck -S warning scripts/*.sh
+xacro src/ugv_main/ugv_description/urdf/bases/ugv_rover.xacro > /dev/null   # also rasp_rover, ugv_beast
 ```
 
 The sim smoke test ([`test_sim_smoke.py`](../src/ugv_main/ugv_webots/test/test_sim_smoke.py))
