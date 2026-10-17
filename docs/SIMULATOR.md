@@ -215,21 +215,21 @@ The script stops with an error if the upstream xacro changes in a way it does no
 | Source | Waveshare's STEP, `UGV Rover PT Jetson Orin ROS2 Kit v2.step` (wiki [UGV Rover Jetson Orin ROS2](https://www.waveshare.com/wiki/UGV_Rover_Jetson_Orin_ROS2), Resources, STEP model). Downloaded and SHA-256 checked by the build script, not stored in the repo. Reference photos and the 2D drawing: `docs/reference/`. |
 | Files | `assets/3d/webots/<link>.dae` (one Collada file per link, one material group per material), `wheel.dae` with `tire_normal.png` and `tire_color.png` (1024 x 256) for all six wheels, `manifest.json`. `ugv_webots/protos/meshes` is a link to that folder and is installed with the package. A GLB of the whole robot for three.js: `assets/3d/glb/ugv_rover.glb` (see `assets/3d/README.md`). |
 | Collisions | Unchanged, primitives only: two chassis boxes, bounding boxes of the lidar, OAK and pan-tilt parts, URDF wheel cylinders. The CAD meshes are only in `Shape` nodes, never in a `boundingObject`. |
-| Budget | About 60k triangles for the robot, under 3k per wheel. Built: 57,167 triangles drawn (table below) in 30 `Shape` nodes (one per link and material, two per wheel). |
+| Budget | About 60k triangles for the robot, under 3k per wheel. Built: 57,140 triangles drawn (table below) in 30 `Shape` nodes (one per link and material, two per wheel). |
 | Wheels | Six. The middle wheels are unpowered in the real kit and visual only here, fixed to the chassis (see [MODEL_CHANGES.md](MODEL_CHANGES.md#drivetrain-six-wheels-four-joints)). |
 
 Triangles per mesh (`build_rover_meshes.py` prints this table):
 
 | Mesh | Triangles | By material |
 |---|---|---|
-| `base_link` (chassis, deck, antennas, Jetson I/O, LEDs) | 23,993 | anodised 9,612, plastic 8,388, steel 4,152, gold 501, lens 615, LED 188, PCB 537 |
-| `base_lidar_link` (LD19) | 3,341 | plastic |
-| `oak_base` (OAK-D Lite) | 1,507 | plastic 1,448, lens 59 |
-| `pt_base_link` (pan servo, standoffs, thrust bearing) | 3,499 | anodised 1,345, plastic 1,534, steel 620 |
+| `base_link` (chassis, deck, antennas, Jetson I/O, LEDs) | 23,993 | anodised 8,661, plastic 9,332, steel 4,007, gold 469, lens 540, LED 162, PCB 822 |
+| `base_lidar_link` (LD19) | 3,323 | plastic |
+| `oak_base` (OAK-D Lite) | 1,499 | plastic 1,431, lens 68 |
+| `pt_base_link` (pan servo, standoffs, thrust bearing) | 3,496 | anodised 1,306, plastic 1,584, steel 606 |
 | `pt_link1` (pan bracket) | 1,200 | anodised |
-| `pt_link2` (tilt servo, camera head, lights, rail, camera) | 5,993 | anodised 2,473, plastic 2,635, steel 771, PCB 114 |
+| `pt_link2` (tilt servo, camera head, lights, rail, camera) | 5,995 | anodised 2,474, plastic 2,636, steel 771, PCB 114 |
 | wheel, drawn 6 times | 2,939 | rubber 1,440, hub 1,499 |
-| **robot, drawn** | **57,167** | |
+| **robot, drawn** | **57,140** | |
 
 How the meshes are built (`ugv_webots/scripts/build_rover_meshes.py`, every step is in the
 script, nothing is edited by hand):
@@ -239,8 +239,8 @@ script, nothing is edited by hand):
 2. Sort the parts into links and materials with the `RULES` table (part names from the
    CAD). Screws, nuts, PCB components smaller than 2.5 mm (6 mm on the Jetson and driver
    boards) and the balls of the pan thrust bearing are dropped.
-3. Place the parts in their link frames. The deck sensors and the pan-tilt are shifted
-   onto the URDF frames (`GROUP_SHIFT`, see [MODEL_CHANGES.md](MODEL_CHANGES.md)).
+3. Place the parts in their link frames. The URDF frames follow the CAD
+   ([MODEL_CHANGES.md](MODEL_CHANGES.md)), so no part is shifted (`GROUP_SHIFT` is zero).
 4. Remove what nobody can see: render the robot from 192 directions with one integer colour
    per triangle (OpenGL through EGL) and keep the triangles that show up, plus a one
    triangle border. Fixed links are tested together with the wheels as occluders, moving
@@ -438,12 +438,9 @@ Recorded results on 2026-10-16 (empty arena unless noted):
   has six; the two unpowered middle wheels are drawn but have no contact and do not spin.
   The asymmetric friction and `wheel_separation_multiplier` approximate its turning, but
   slip on different floors is not modelled.
-* **Sensor heights.** The URDF puts the deck sensors 10 mm and the pan-tilt head 19 mm
-  lower than on the Jetson Orin kit ([MODEL_CHANGES.md](MODEL_CHANGES.md)); the high detail
-  visuals follow the URDF, so they look that much lower than the real robot.
 * **No cables.** The STEP has no cables, so the camera and antenna cables are missing.
-* **Lidar self-hits.** With the high detail model the scan is blocked in 67 of 480 bins
-  (low detail and the old model: 102): the pan-tilt mast behind the lidar, and the two
+* **Lidar self-hits.** With the high detail model the scan is blocked in 65 of 480 bins
+  (the old model: 102): the pan-tilt mast behind the lidar, and the two
   antennas at the rear corners (about 4 degrees each, at 0.12 m), which the real LD19 also
   sees. Self-hits are closer than `minRange` (0.2 m), so they read `inf`.
 * **No IMU and no EKF.** On the robot, `/odom` comes from `robot_localization` fusing the
