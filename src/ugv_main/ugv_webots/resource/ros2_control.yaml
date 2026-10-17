@@ -1,0 +1,77 @@
+# ros2_control configuration for the Webots simulation (webots_ros2_control).
+#
+# diffdrive_controller reproduces the Gazebo DiffDrive setup in
+# ugv_description/urdf/gazebo/ugv_rover.gazebo: two joints per side,
+# wheel_separation 0.17452, wheel_radius 0.04, and the same velocity and
+# acceleration limits as the Gazebo Harmonic plugin.
+# It is the only publisher of /odom and of the odom -> base_footprint transform.
+# The launch file remaps /diffdrive_controller/cmd_vel_unstamped -> /cmd_vel
+# and /diffdrive_controller/odom -> /odom.
+#
+# pt_joint_position_controller is the same controller as
+# ugv_description/config/ros2_controllers.yaml, so the existing pan-tilt
+# topic /pt_joint_position_controller/commands works unchanged.
+
+controller_manager:
+  ros__parameters:
+    update_rate: 100  # Hz, one update per Webots step (basicTimeStep 10 ms)
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    diffdrive_controller:
+      type: diff_drive_controller/DiffDriveController
+
+    pt_joint_position_controller:
+      type: position_controllers/JointGroupPositionController
+
+diffdrive_controller:
+  ros__parameters:
+    left_wheel_names: ["left_up_wheel_link_joint", "left_down_wheel_link_joint"]
+    right_wheel_names: ["right_up_wheel_link_joint", "right_down_wheel_link_joint"]
+
+    wheel_separation: 0.17452
+    wheel_radius: 0.04
+    # Skid steering: the four wheels scrub sideways when turning, so the body turns
+    # slower than an ideal two-wheel diff drive. The multiplier scales the track used
+    # for commands and odometry (effective track = 1.25 * 0.17452 m). Measured with
+    # `ros2 run ugv_webots motion_check`, see docs/SIMULATOR.md.
+    wheel_separation_multiplier: 1.25
+
+    odom_frame_id: odom
+    base_frame_id: base_footprint
+    enable_odom_tf: true
+    publish_rate: 50.0
+    open_loop: false
+    position_feedback: true
+
+    pose_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 0.01]
+    twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 0.01]
+
+    cmd_vel_timeout: 0.5
+    use_stamped_vel: false
+
+    linear:
+      x:
+        has_velocity_limits: true
+        max_velocity: 1.5
+        min_velocity: -1.5
+        has_acceleration_limits: true
+        max_acceleration: 3.0
+        min_acceleration: -3.0
+
+    angular:
+      z:
+        has_velocity_limits: true
+        max_velocity: 3.14
+        min_velocity: -3.14
+        has_acceleration_limits: true
+        max_acceleration: 6.0
+        min_acceleration: -6.0
+
+pt_joint_position_controller:
+  ros__parameters:
+    joints:
+      - pt_base_link_to_pt_link1
+      - pt_link1_to_pt_link2
+    interface_name: position

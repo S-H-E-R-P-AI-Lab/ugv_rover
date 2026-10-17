@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>ugv_webots</name>
+  <version>0.1.0</version>
+  <description>Webots simulation of the Waveshare UGV Rover. Publishes the same topics and frames as ugv_gazebo.</description>
+  <maintainer email="a.hamilton72006@gmail.com">S-H-E-R-P-AI-Lab</maintainer>
+  <license>Apache-2.0</license>
+
+  <exec_depend>ugv_description</exec_depend>
+  <exec_depend>ugv_slam</exec_depend>
+  <exec_depend>ugv_nav</exec_depend>
+  <exec_depend>ugv_bringup</exec_depend>
+  <exec_depend>robot_pose_publisher</exec_depend>
+  <exec_depend>slam_gmapping</exec_depend>
+  <exec_depend>cartographer</exec_depend>
+  <exec_depend>slam_toolbox</exec_depend>
+  <exec_depend>nav2_bringup</exec_depend>
+
+  <exec_depend>webots_ros2_driver</exec_depend>
+  <exec_depend>webots_ros2_control</exec_depend>
+  <exec_depend>webots_ros2_importer</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>diff_drive_controller</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+  <exec_depend>position_controllers</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>depth_image_proc</exec_depend>
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>rosgraph_msgs</exec_depend>
+
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

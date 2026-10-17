@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-WS=/home/ws/ugv_ws
+WS="${UGV_WS:-/home/ws/ugv_ws}"
 cd $WS || exit 1
 
 PACKAGES=(
@@ -35,6 +35,7 @@ PACKAGES=(
   ugv_vision
   ugv_voice
   ugv_web_app
+  ugv_webots
 )
 
 echo "=============================="

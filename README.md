@@ -1,94 +1,71 @@
-![GitHub top language](https://img.shields.io/github/languages/top/waveshareteam/ugv_ws)
-![GitHub language count](https://img.shields.io/github/languages/count/waveshareteam/ugv_ws)
-![GitHub last commit (branch)](https://img.shields.io/github/last-commit/waveshareteam/ugv_ws/ros2-humble-develop-251125)
+# UGV Rover workspace (S-H-E-R-P AI Lab)
 
-# ROS2 for WaveShare UGV
+ROS 2 Humble workspace for the **Waveshare UGV Rover** (6-wheel skid steer, LD19 lidar,
+pan-tilt USB camera, OAK-D depth camera), with a **Webots simulator** that behaves like the
+real robot.
 
-**ugv_ws** is a **ROS2 Humble** colcon workspace for **WaveShare UGV**. It connects **RViz2**, **SLAM**, and **Nav2** to real hardware over serial, with optional vision, voice, web UI, and Gazebo simulation.
+This is our fork of [waveshareteam/ugv_ws](https://github.com/waveshareteam/ugv_ws)
+(branch `ros2-humble-develop-251125`). Waveshare's packages drive the real robot; we added
+`src/ugv_main/ugv_webots` (the simulator) and the documentation below. Webots replaces Gazebo
+as our default simulator (`ugv_gazebo` is still there, untouched).
 
-## Documentation
-
-Tutorials live in [`docs/`](docs/). On GitHub, open any `.md` file to read the rendered preview — no Wiki or separate site required.
-
-| | |
-|---|---|
-| **Browse on GitHub** | [docs/](https://github.com/waveshareteam/ugv_ws/tree/ros2-humble-develop-251125/docs) — start with [index.md](https://github.com/waveshareteam/ugv_ws/blob/ros2-humble-develop-251125/docs/index.md) |
-| **Optional local site** | `pip install -r docs/requirements.txt` then `mkdocs serve` (sidebar nav + copy buttons; same source files) |
-
-### Getting Started
-
-| Section | Page |
-|---------|------|
-| Overview | [docs/index.md](docs/index.md) |
-| ROS2 Basics | [docs/ros2_basics.md](docs/ros2_basics.md) |
-| UGV Basics | [docs/ugv_basics.md](docs/ugv_basics.md) |
-| Installation | [docs/installation.md](docs/installation.md) |
-
-### Tutorials
-
-| Section | Page |
-|---------|------|
-| Robot Description | [docs/description.md](docs/description.md) |
-| Hardware Driver | [docs/bringup.md](docs/bringup.md) |
-| Keyboard & Gamepad Control | [docs/teleoperation.md](docs/teleoperation.md) |
-| LiDAR Interaction | [docs/lidar.md](docs/lidar.md) |
-| Vision | [docs/vision.md](docs/vision.md) |
-| Mapping | [docs/mapping.md](docs/mapping.md) |
-| Web App | [docs/web_app.md](docs/web_app.md) |
-| Navigation | [docs/navigation.md](docs/navigation.md) |
-| Behavior Command Control | [docs/behavior_ctrl.md](docs/behavior_ctrl.md) |
-| Experimental | [docs/experimental.md](docs/experimental.md) |
-| Gazebo | [docs/gazebo.md](docs/gazebo.md) |
-
-Package layout: [docs/packages.md](docs/packages.md)
-
-Suggested order: [docs/index.md — Suggested reading order](docs/index.md#suggested-reading-order).
-
-**Factory image:** Docker + SSH port **23** (`root`/`ws`). **Camera:** `:8889/cam/`. **Web AI (experimental):** `:5000`.
+New to ROS? Read the [ROS 2 primer](docs/ROS2_PRIMER.md) first (15 minutes).
 
 ## Quick start
 
-**Ubuntu 22.04** + **ROS2 Humble**. Factory images: run `bash ros2.sh` and SSH into the container.
+| Your computer | Guide | Status |
+|---|---|---|
+| Windows 11 | [docs/setup/WINDOWS_WSL2.md](docs/setup/WINDOWS_WSL2.md): Ubuntu 22.04 in WSL2, Webots on Windows | Tested |
+| Ubuntu 22.04 | [docs/setup/LINUX.md](docs/setup/LINUX.md) | ROS side tested; native Webots install not tested |
+| Mac (Apple Silicon) | [docs/setup/MACOS.md](docs/setup/MACOS.md): Webots on macOS, ROS in an Ubuntu VM | Not tested yet |
 
-Clone **on the host** (install **git-lfs** and pull weights **now**). Then run **`build_first.sh` inside Docker** — that script does not pull LFS, and running `git lfs pull` as **root** in the container can break host file permissions.
-
-```bash
-sudo apt install -y git git-lfs
-git lfs install
-git clone -b ros2-humble-develop-251125 https://github.com/waveshareteam/ugv_ws.git
-cd ugv_ws
-git lfs pull
-```
-
-Inside the container:
+In short, on Ubuntu 22.04 (or in WSL or the Mac's VM), with Webots R2025a installed:
 
 ```bash
-sudo bash build_first.sh
+sudo apt update && sudo apt install -y git git-lfs && git lfs install
+git clone https://github.com/S-H-E-R-P-AI-Lab/ugv_rover.git ~/ugv_rover
+cd ~/ugv_rover && bash scripts/setup_ubuntu.sh
+# open a new terminal, then:
+ros2 launch ugv_webots ugv_webots.launch.py use_rviz:=true
 ```
 
-`build_first.sh` installs dependencies, prompts for `UGV_MODEL` and `LDLIDAR_MODEL`, and runs `colcon build`. Gazebo is optional (default: skip). Details: [Installation](docs/installation.md).
+## What you can do in simulation
 
-### Model settings
+```bash
+ros2 launch ugv_webots ugv_webots.launch.py use_rviz:=true   # robot in an apartment
+ros2 run ugv_tools keyboard_ctrl                              # drive it (second terminal)
+ros2 launch ugv_webots gmapping.launch.py                     # build a map
+ros2 launch ugv_webots nav.launch.py                          # navigate (click "2D Goal Pose" in RViz)
+```
 
-| Hardware | `UGV_MODEL` | `LDLIDAR_MODEL` |
-|----------|-------------|-----------------|
-| UGV Rover (6-wheel 4WD) | `ugv_rover` | `ld06` / `ld19` / `stl27l` |
-| UGV Beast (tracked) | `ugv_beast` | per your kit |
-| RaspRover (4WD) | `rasp_rover` | per your kit |
+The simulator publishes the same topics and frames as the robot setup (`/scan`, `/odom`,
+`/tf`, `/image_raw`, `/oak/...`, `/cmd_vel`), so code tested in simulation runs on the robot.
+Details: [docs/SIMULATOR.md](docs/SIMULATOR.md).
 
-See [UGV Basics](docs/ugv_basics.md) for AI Kit vs ROS2 Kit naming.
+## Documentation
 
-### Typical real-robot workflow
+| Page | For |
+|---|---|
+| [docs/ROS2_PRIMER.md](docs/ROS2_PRIMER.md) | ROS 2 basics with this robot, daily commands |
+| [docs/setup/](docs/setup/) | Installation per operating system |
+| [docs/SIMULATOR.md](docs/SIMULATOR.md) | How the Webots simulation works, topics and frames, adding worlds, tuning, known gaps |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Problems we hit and how to fix them |
+| [docs/UPSTREAM_CHANGES.md](docs/UPSTREAM_CHANGES.md) | What we changed in Waveshare's files, and how to sync with upstream |
+| [docs/UPSTREAM_README.md](docs/UPSTREAM_README.md) | Waveshare's original README, and from there their tutorials for the real robot (bringup, mapping, navigation, vision, web app) |
 
-1. **T0** — robot stack: bringup, SLAM, or Nav2 (each is one launch — see [Typical paths](docs/index.md#typical-paths))
-2. **T1** — teleop while mapping (`keyboard_ctrl` / gamepad), Web App, or **`explore_lite`** — only when the workflow needs a second terminal
+## Repository layout
 
-Example — teleop only: **T0** `bringup_lidar.launch.py` · **T1** `keyboard_ctrl`. Example — mapping: **T0** `slam_toolbox.launch.py` · **T1** `keyboard_ctrl`.
+```
+src/ugv_main/   robot packages: description, bringup, slam, nav, tools, vision, voice, web app,
+                ugv_gazebo (Gazebo), ugv_webots (Webots, ours)
+src/ugv_else/   third party packages: cartographer, gmapping, ldlidar, teb, emcl2, ...
+docs/           documentation (ours and Waveshare's)
+scripts/        setup_ubuntu.sh
+build_first.sh  Waveshare's install and build script (used on the robot)
+```
 
-Simulation: **VM or desktop only** — see [Gazebo](docs/gazebo.md); add `use_sim_time:=true` on SLAM/Nav launches.
+## Branches
 
-## Useful resources
-
-- [Nav2 Setup Guides](https://navigation.ros.org/setup_guides/index.html)
-- [UGV Rover PI ROS2 Wiki](https://www.waveshare.com/wiki/UGV_Rover_PI_ROS2)
-- [UGV Beast PI ROS2 Wiki](https://www.waveshare.com/wiki/UGV_Beast_PI_ROS2)
+* `main`: Waveshare's `ros2-humble-develop-251125` plus our changes. Sync procedure in
+  [docs/UPSTREAM_CHANGES.md](docs/UPSTREAM_CHANGES.md#syncing-with-upstream).
+* Work on feature branches and open pull requests into `main`.
