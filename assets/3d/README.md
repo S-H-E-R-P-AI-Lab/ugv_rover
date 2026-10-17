@@ -36,4 +36,4 @@ const wheel = gltf.scene.getObjectByName('left_up_wheel_link');  // rotate about
   `right_mid_wheel` are the unpowered middle wheels (fixed to the chassis, spin them with
   the others if you like).
 * Positions follow the CAD and the URDF of the Jetson Orin kit (`ugv_rover.xacro`
-  `kit:=jetson_orin`, see [docs/MODEL_CHANGES.md](../../docs/MODEL_CHANGES.md)).
+  with `UGV_KIT` unset or `jetson_orin`, see [docs/MODEL_CHANGES.md](../../docs/MODEL_CHANGES.md)).

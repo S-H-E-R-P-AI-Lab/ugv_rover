@@ -8,8 +8,9 @@ two disagree, how it was measured, and what was changed.
 
 **What changed:** the lidar, OAK and pan-tilt frames of `ugv_rover` now follow the CAD
 (table below). Masses, inertias, joint axes, wheel frames and the other robots
-(`rasp_rover`, `ugv_beast`) are unchanged. `ugv_rover.xacro kit:=upstream` restores
-Waveshare's original values (byte for byte the same URDF as before).
+(`rasp_rover`, `ugv_beast`) are unchanged. `export UGV_KIT=upstream` (or the xacro argument
+`kit:=upstream`) restores Waveshare's original values (byte for byte the same URDF as
+before).
 
 ## How it was measured
 
@@ -56,8 +57,8 @@ Jetson under the deck (lower standoffs) and shorter pan-tilt standoffs (`M3*35` 
 
 ## Changes to the URDF
 
-`ugv_description/urdf/bases/ugv_rover.xacro` gets an argument `kit` (default
-`jetson_orin`); `ugv_description/urdf/sensors/pt.xacro` gets two optional macro parameters
+`ugv_description/urdf/bases/ugv_rover.xacro` gets an argument `kit` (default from the
+environment variable `UGV_KIT`, else `jetson_orin`); `ugv_description/urdf/sensors/pt.xacro` gets two optional macro parameters
 (`pt_base_link_joint_pose_x`, `pan_joint_pose_z`) whose defaults are the old values, so the
 other robots that include it are unchanged.
 
@@ -79,7 +80,7 @@ Effects:
 * **Real robot.** `ugv_bringup` builds TF from the same xacro, so on the robot the lidar,
   OAK and pan-tilt camera frames move by these amounts too (they were wrong by up to 2 cm).
   A robot with the lower deck (Waveshare's Raspberry Pi build, if that is what the old
-  values describe) should launch with `kit:=upstream`.
+  values describe) should set `export UGV_KIT=upstream` next to `UGV_MODEL`.
 * **Simulation.** The sensors move with their frames: the lidar scan plane is 10 mm higher,
   the cameras 10 and 19 mm higher. Driving is unchanged (`motion_check`: 1.000 m forward,
   360.3 / 359.7 degrees odometry / truth for a full turn, as before). The combined body's
