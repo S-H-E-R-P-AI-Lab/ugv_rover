@@ -16,9 +16,11 @@ This page lists every change to a file that exists upstream, and why.
 | `.gitignore` | Extended (Python caches, Webots generated files, editor files, Windows metadata). Upstream entries kept. | Keep build output and Webots temporary files out of commits. |
 | `build_first.sh` | `WS=/home/ws/ugv_ws` became `WS="${UGV_WS:-/home/ws/ugv_ws}"`. Added `ros-humble-webots-ros2` and `ros-humble-depth-image-proc` to the apt list. Builds `ugv_webots` when `ros-humble-webots-ros2` is installed. | The script hard codes the path used inside Waveshare's Docker image. Setting `UGV_WS` lets us run it on a laptop. The default is unchanged, so it behaves the same on the robot. |
 | `build_common.sh` | Same `UGV_WS` override, `ugv_webots` added to the package menu. | Same as above. |
+| `src/ugv_main/ugv_description/urdf/bases/ugv_rover.xacro` | New argument `kit` (default `$UGV_KIT`, else `jetson_orin`) that moves the lidar, OAK and pan-tilt joints to the positions measured on Waveshare's STEP of the Jetson Orin kit; `UGV_KIT=upstream` gives the original URDF. | The upstream frames were up to 19 mm off for our kit, on the robot and in simulation. Evidence: [MODEL_CHANGES.md](MODEL_CHANGES.md). |
+| `src/ugv_main/ugv_description/urdf/sensors/pt.xacro` | Optional macro parameters `pt_base_link_joint_pose_x` and `pan_joint_pose_z`, defaults equal to the old values. | Lets `ugv_rover` set them without changing `rasp_rover` and `ugv_beast`. |
 
-No upstream ROS package (`src/ugv_main/*` other than `ugv_webots`, `src/ugv_else/*`) is
-modified. In particular `ugv_gazebo` and `ugv_description` are untouched: the Webots robot
+No other upstream ROS package (`src/ugv_main/*` other than `ugv_webots` and the two
+`ugv_description` files above, `src/ugv_else/*`) is modified. `ugv_gazebo` is untouched: the Webots robot
 model is generated from `ugv_description` at build and launch time (see
 [SIMULATOR.md](SIMULATOR.md)), and the simulator reuses the SLAM and Nav2 configuration
 files of `ugv_slam` and `ugv_nav` as they are.

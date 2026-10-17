@@ -1,0 +1,339 @@
+{
+ "source": "https://files.waveshare.com/wiki/UGV%20Rover%20Jetson%20Orin%20ROS2/UGV_Rover_PT_Jetson_Orin_ROS2_Kit_STEP.zip",
+ "step_zip_sha256": "eaa50ebdd9a648da45f1b0b54321167efa6540411a908e44e8c80d40e33b01ff",
+ "group_shift_m": {
+  "chassis": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "deck": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "lidar": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "oak": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "pt_base": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "pt_pan": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "pt_tilt": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ "links": {
+  "base_link": {
+   "file": "base_link.dae",
+   "materials": [
+    "anodized",
+    "plastic",
+    "steel",
+    "gold",
+    "lens",
+    "led",
+    "pcb"
+   ],
+   "triangles": {
+    "anodized": 8661,
+    "plastic": 9332,
+    "steel": 4007,
+    "gold": 469,
+    "lens": 540,
+    "led": 162,
+    "pcb": 822
+   },
+   "cad_triangles_after_culling": 261101
+  },
+  "base_lidar_link": {
+   "file": "base_lidar_link.dae",
+   "materials": [
+    "plastic"
+   ],
+   "triangles": {
+    "plastic": 3323
+   },
+   "cad_triangles_after_culling": 20211
+  },
+  "oak_base": {
+   "file": "oak_base.dae",
+   "materials": [
+    "plastic",
+    "lens"
+   ],
+   "triangles": {
+    "plastic": 1431,
+    "lens": 68
+   },
+   "cad_triangles_after_culling": 20272
+  },
+  "pt_base_link": {
+   "file": "pt_base_link.dae",
+   "materials": [
+    "anodized",
+    "plastic",
+    "steel"
+   ],
+   "triangles": {
+    "anodized": 1306,
+    "plastic": 1584,
+    "steel": 606
+   },
+   "cad_triangles_after_culling": 24799
+  },
+  "pt_link1": {
+   "file": "pt_link1.dae",
+   "materials": [
+    "anodized"
+   ],
+   "triangles": {
+    "anodized": 1200
+   },
+   "cad_triangles_after_culling": 4084
+  },
+  "pt_link2": {
+   "file": "pt_link2.dae",
+   "materials": [
+    "anodized",
+    "plastic",
+    "steel",
+    "pcb"
+   ],
+   "triangles": {
+    "anodized": 2474,
+    "plastic": 2636,
+    "steel": 771,
+    "pcb": 114
+   },
+   "cad_triangles_after_culling": 51131
+  },
+  "wheel": {
+   "file": "wheel.dae",
+   "materials": [
+    "rubber",
+    "hub"
+   ],
+   "triangles": {
+    "rubber": 1440,
+    "hub": 1499
+   },
+   "textures": {
+    "rubber": {
+     "normal": "tire_normal.png",
+     "color": "tire_color.png"
+    }
+   },
+   "middle_wheels": {
+    "left_mid_wheel": [
+     0.0,
+     0.0883,
+     -0.0412
+    ],
+    "right_mid_wheel": [
+     0.0,
+     -0.0883,
+     -0.0412
+    ]
+   }
+  }
+ },
+ "glb": "assets/3d/glb/ugv_rover.glb",
+ "joints": {
+  "base_lidar_link": {
+   "joint": "base_lidar_link_joint",
+   "type": "fixed",
+   "parent": "base_link",
+   "axis": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "origin_xyz": [
+    0.0398,
+    0.0001,
+    0.05
+   ]
+  },
+  "oak_base": {
+   "joint": "oak_base_joint",
+   "type": "fixed",
+   "parent": "base_link",
+   "axis": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "origin_xyz": [
+    0.0684,
+    0.0,
+    0.0321
+   ]
+  },
+  "3d_camera_link": {
+   "joint": "3d_camera_link_joint",
+   "type": "fixed",
+   "parent": "oak_base",
+   "axis": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "origin_xyz": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "pt_base_link": {
+   "joint": "pt_base_link_joint",
+   "type": "fixed",
+   "parent": "base_link",
+   "axis": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "origin_xyz": [
+    -0.02001,
+    0.0,
+    0.0496
+   ]
+  },
+  "pt_link1": {
+   "joint": "pt_base_link_to_pt_link1",
+   "type": "revolute",
+   "parent": "pt_base_link",
+   "axis": [
+    0.0,
+    0.0,
+    1.0
+   ],
+   "origin_xyz": [
+    0.0113,
+    0.0,
+    0.0478
+   ]
+  },
+  "pt_link2": {
+   "joint": "pt_link1_to_pt_link2",
+   "type": "revolute",
+   "parent": "pt_link1",
+   "axis": [
+    0.0,
+    0.0,
+    1.0
+   ],
+   "origin_xyz": [
+    0.0,
+    0.02,
+    0.043003
+   ]
+  },
+  "pt_camera_link": {
+   "joint": "pt_camera_link_joint",
+   "type": "fixed",
+   "parent": "pt_link2",
+   "axis": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "origin_xyz": [
+    0.0484,
+    -0.000569,
+    0.02
+   ]
+  },
+  "base_link": {
+   "joint": "base_joint",
+   "type": "fixed",
+   "parent": "base_footprint",
+   "axis": [
+    1,
+    0,
+    0
+   ],
+   "origin_xyz": [
+    0.0,
+    0.0,
+    0.081
+   ]
+  },
+  "left_up_wheel_link": {
+   "joint": "left_up_wheel_link_joint",
+   "type": "continuous",
+   "parent": "base_link",
+   "axis": [
+    0.0,
+    1.0,
+    0.0
+   ],
+   "origin_xyz": [
+    0.0855,
+    0.08725,
+    -0.041212
+   ]
+  },
+  "left_down_wheel_link": {
+   "joint": "left_down_wheel_link_joint",
+   "type": "continuous",
+   "parent": "base_link",
+   "axis": [
+    0.0,
+    1.0,
+    0.0
+   ],
+   "origin_xyz": [
+    -0.0855,
+    0.08725,
+    -0.041212
+   ]
+  },
+  "right_up_wheel_link": {
+   "joint": "right_up_wheel_link_joint",
+   "type": "continuous",
+   "parent": "base_link",
+   "axis": [
+    0.0,
+    1.0,
+    0.0
+   ],
+   "origin_xyz": [
+    0.0855,
+    -0.08725,
+    -0.041212
+   ]
+  },
+  "right_down_wheel_link": {
+   "joint": "right_down_wheel_link_joint",
+   "type": "continuous",
+   "parent": "base_link",
+   "axis": [
+    0.0,
+    1.0,
+    0.0
+   ],
+   "origin_xyz": [
+    -0.0855,
+    -0.08725,
+    -0.041212
+   ]
+  }
+ }
+}

@@ -13,7 +13,7 @@ configs of `ugv_slam` and `ugv_nav` run unchanged.
 * [Running it](#running-it)
 * [How it works](#how-it-works)
 * [Topic and frame contract](#topic-and-frame-contract)
-* [Robot model and regenerating the PROTO](#robot-model-and-regenerating-the-proto)
+* [Robot model](#robot-model)
 * [Drive and contact tuning](#drive-and-contact-tuning)
 * [Worlds and adding a world](#worlds-and-adding-a-world)
 * [Performance](#performance)
@@ -40,9 +40,10 @@ Arguments of `ugv_webots.launch.py` (see `--show-args`):
 | `headless` | `false` | Start Webots minimized without rendering its 3D view (sensors still render) |
 | `use_rviz` | `false` | Open RViz |
 | `rviz_config` | `webots` | `webots` (all sensors), or the upstream configs `description`, `bringup`, `slam_2d`, `slam_3d`, `nav_2d`, `nav_3d` |
+| `detail` | `high` | Robot visuals: `high` (CAD meshes) or `low` (the previous URDF meshes) |
 | `use_oak_points` | `true` | Build `/oak/points` from the depth image |
 
-The wrappers accept `world`, `use_rviz` (default `true`) and `headless`. `nav.launch.py`
+The wrappers accept `world`, `use_rviz` (default `true`), `headless` and `detail`. `nav.launch.py`
 also mirrors `ugv_nav/launch/nav.launch.py`: `map`, `use_localization` (`amcl`, `emcl`,
 `cartographer`, `slam_toolbox`), `use_localplan` (`dwa`, `teb`, `rpp`, `mppi`), `use_slam`,
 `use_keepout_zones`, `keepout_mask`.
@@ -84,9 +85,11 @@ Package layout:
 ugv_webots/
   launch/      ugv_webots.launch.py, gmapping, cartographer, slam_toolbox, nav, slam_nav (+ _common.py)
   worlds/      empty_arena.wbt, apartment.wbt
-  protos/      UgvRover.proto (generated, then tuned by the generator script)
+  protos/      UgvRover.proto (generated, then tuned by the generator script),
+               meshes/ (link to assets/3d/webots: Collada meshes of the high detail model)
   resource/    webots_extras.urdf (driver plugins, ros2_control), ros2_control.yaml
-  scripts/     generate_proto.py (URDF to PROTO)
+  scripts/     generate_proto.py (URDF to PROTO), build_rover_meshes.py (STEP to meshes),
+               render_views.py and fit_photo_views.py (comparison renders)
   maps/        apartment.yaml/.pgm (made with gmapping in the apartment world)
   rviz/        view_webots.rviz
   ugv_webots/  description.py, scan_normalizer.py, ground_truth.py, webots_host.py,
@@ -163,16 +166,31 @@ base_footprint -> base_link -> base_lidar_link
 | OAK RGB | 640x480, FOV 1.02974 rad, 20 Hz | As Gazebo. |
 | OAK depth | 640x480, FOV 1.02974 rad, 0.2 to 8 m, 20 Hz | As Gazebo's depth clip. |
 
-## Robot model and regenerating the PROTO
+## Robot model
+
+The robot has two halves that come from different places:
+
+* **Physics, joints and sensors** come from the upstream URDF (`ugv_description`): link
+  frames, joint origins and axes, masses, inertias, collision shapes, sensor poses. The
+  TF tree is built from the same URDF, so what Webots simulates and what ROS sees agree.
+* **Visuals** come from Waveshare's STEP model of the UGV Rover PT Jetson Orin ROS2 Kit
+  (high detail, the default) or from the URDF meshes (low detail). They never collide and
+  have no mass.
+
+Differences between the URDF frames and the CAD are measured in
+[MODEL_CHANGES.md](MODEL_CHANGES.md).
+
+### Physics and sensors (generated PROTO)
 
 `protos/UgvRover.proto` is **generated**. Do not edit it by hand: change
 `scripts/generate_proto.py` and regenerate:
 
 ```bash
 cd ~/ugv_rover
-colcon build --symlink-install --packages-select ugv_description ugv_webots
+colcon build --packages-select ugv_description ugv_webots
 source install/setup.bash
 python3 src/ugv_main/ugv_webots/scripts/generate_proto.py
+colcon build --packages-select ugv_webots   # install the new PROTO
 ```
 
 Pipeline: xacro (the same function the launch file uses), then urdf2webots (bundled with
@@ -182,13 +200,99 @@ Pipeline: xacro (the same function the launch file uses), then urdf2webots (bund
 |---|---|
 | Inertia check | Every URDF mass and inertia is checked (positive, triangle inequality). All passed. The values are consistent with solid boxes and cylinders of each mesh's size (for example base 2.185 kg, 0.245 x 0.23 x 0.12 m box gives 0.0123 / 0.0135 / 0.0206 kg m^2 against 0.0123 / 0.0136 / 0.0206 in the URDF), so they are not vendor placeholders and **no mass or inertia value was changed**. Total robot mass is 3.07 kg. |
 | Rigid bodies | urdf2webots makes the root `base_footprint` a Robot without physics and every fixed link a separate Solid. Webots then ignores the collisions of physics-less child Solids and the robot falls through the floor. The script groups links joined by fixed joints into one body, puts the combined mass, centre of mass and inertia (parallel axis theorem) on the body root, and turns the other links into `Pose` nodes. Bodies: main body 2.336 kg (base, lidar, OAK, pan-tilt base; centre of mass 6.5 cm above the floor), pan link 0.006 kg, tilt link with camera 0.081 kg, four wheels 0.163 kg each. |
-| Meshes | All STL meshes are inlined as `IndexedFaceSet`, so the PROTO is one self-contained file. The macOS shared-folder mode copies only the files the world names directly. |
+| Meshes | Low detail: all URDF STL meshes are inlined as `IndexedFaceSet`. High detail: `Mesh` nodes on the Collada files in `protos/meshes` (next section). The PROTO field `detail` picks one with a template branch around every visual `Shape`. |
 | Collisions | `ugv_rover_base.stl` reaches the ground (it includes the six-wheel side frames), so the chassis collides as two boxes that clear the wheels: 0.240 x 0.128 x 0.045 m between the wheels and a 0.245 x 0.230 x 0.040 m top plate. Lidar, OAK and pan-tilt parts collide as their mesh bounding boxes. Wheels keep the URDF cylinders (r 0.04 m, width 0.0425 m). |
 | Wheels | `contactMaterial "ugv_wheel"`, motors limited to 40 rad/s (1.6 m/s) and 1.2 N m. |
 | Sensors | Lidar, cameras and RangeFinder added at the frames listed above. |
 | Header | Robot name `ugv_rover`, controller `<extern>`, `supervisor TRUE` (for the ground truth plugin). |
 
 The script stops with an error if the upstream xacro changes in a way it does not expect.
+
+### Visual model (high detail)
+
+| | |
+|---|---|
+| Source | Waveshare's STEP, `UGV Rover PT Jetson Orin ROS2 Kit v2.step` (wiki [UGV Rover Jetson Orin ROS2](https://www.waveshare.com/wiki/UGV_Rover_Jetson_Orin_ROS2), Resources, STEP model). Downloaded and SHA-256 checked by the build script, not stored in the repo. Reference photos and the 2D drawing: `docs/reference/`. |
+| Files | `assets/3d/webots/<link>.dae` (one Collada file per link, one material group per material), `wheel.dae` with `tire_normal.png` and `tire_color.png` (1024 x 256) for all six wheels, `manifest.json`. `ugv_webots/protos/meshes` is a link to that folder and is installed with the package. A GLB of the whole robot for three.js: `assets/3d/glb/ugv_rover.glb` (see `assets/3d/README.md`). |
+| Collisions | Unchanged, primitives only: two chassis boxes, bounding boxes of the lidar, OAK and pan-tilt parts, URDF wheel cylinders. The CAD meshes are only in `Shape` nodes, never in a `boundingObject`. |
+| Budget | About 60k triangles for the robot, under 3k per wheel. Built: 57,140 triangles drawn (table below) in 30 `Shape` nodes (one per link and material, two per wheel). |
+| Wheels | Six. The middle wheels are unpowered in the real kit and visual only here, fixed to the chassis (see [MODEL_CHANGES.md](MODEL_CHANGES.md#drivetrain-six-wheels-four-joints)). |
+
+Triangles per mesh (`build_rover_meshes.py` prints this table):
+
+| Mesh | Triangles | By material |
+|---|---|---|
+| `base_link` (chassis, deck, antennas, Jetson I/O, LEDs) | 23,993 | anodised 8,661, plastic 9,332, steel 4,007, gold 469, lens 540, LED 162, PCB 822 |
+| `base_lidar_link` (LD19) | 3,323 | plastic |
+| `oak_base` (OAK-D Lite) | 1,499 | plastic 1,431, lens 68 |
+| `pt_base_link` (pan servo, standoffs, thrust bearing) | 3,496 | anodised 1,306, plastic 1,584, steel 606 |
+| `pt_link1` (pan bracket) | 1,200 | anodised |
+| `pt_link2` (tilt servo, camera head, lights, rail, camera) | 5,995 | anodised 2,474, plastic 2,636, steel 771, PCB 114 |
+| wheel, drawn 6 times | 2,939 | rubber 1,440, hub 1,499 |
+| **robot, drawn** | **57,140** | |
+
+How the meshes are built (`ugv_webots/scripts/build_rover_meshes.py`, every step is in the
+script, nothing is edited by hand):
+
+1. Download the STEP zip (cached in `~/.cache/ugv_rover_model`), check its SHA-256,
+   tessellate every part with OpenCascade (0.15 mm chordal tolerance, 1.74 M triangles).
+2. Sort the parts into links and materials with the `RULES` table (part names from the
+   CAD). Screws, nuts, PCB components smaller than 2.5 mm (6 mm on the Jetson and driver
+   boards) and the balls of the pan thrust bearing are dropped.
+3. Place the parts in their link frames. The URDF frames follow the CAD
+   ([MODEL_CHANGES.md](MODEL_CHANGES.md)), so no part is shifted (`GROUP_SHIFT` is zero).
+4. Remove what nobody can see: render the robot from 192 directions with one integer colour
+   per triangle (OpenGL through EGL) and keep the triangles that show up, plus a one
+   triangle border. Fixed links are tested together with the wheels as occluders, moving
+   links alone. Motor gearboxes, the insides of the chassis, the bottom of the boards and
+   the inside of the sensor housings go away (868k to 283k triangles for the fixed links).
+   Before that, the faces of the LD19 within 35 mm of the scan origin that face it (the
+   inside of its window) are removed (`SENSOR_CLEARANCE`): the simulated lidar sits inside
+   the housing and would otherwise see them.
+5. Decimate each link to its budget (`BUDGET`) with MeshLab's quadric edge collapse,
+   split between materials by their visible triangle counts (the shell gets more), with
+   vertex placement off so nothing moves outside the CAD surface. Split normals at edges
+   sharper than 35 degrees.
+6. Wheels are rebuilt: a tyre of revolution that follows the CAD profile (48 segments) with
+   the knobby tread baked from the CAD into a normal map and a darkened base colour map,
+   plus the decimated hub.
+7. Write the Collada files (`Z_UP`, materials named `00_<material>` so Webots'
+   `materialIndex` follows the file order), the GLB and `manifest.json`.
+
+Regenerate (needs [uv](https://docs.astral.sh/uv/) and an OpenGL driver; about 25 s with
+the STEP cache, 2 min the first time):
+
+```bash
+cd ~/ugv_rover
+source install/setup.bash
+python3 src/ugv_main/ugv_webots/scripts/generate_proto.py    # writes the URDF the mesh build reads
+uv run src/ugv_main/ugv_webots/scripts/build_rover_meshes.py  # --report lists visible triangles per part
+python3 src/ugv_main/ugv_webots/scripts/generate_proto.py    # PROTO with the new mesh files
+colcon build --packages-select ugv_webots
+```
+
+The build is deterministic (same files byte for byte on a rerun). Blender is not needed.
+
+**Materials.** `assets/3d/materials.json` holds the PBR values (linear base colour,
+metalness, roughness, emissive) of the nine materials: `anodized` (shell, deck, brackets),
+`plastic`, `hub`, `rubber`, `steel`, `gold`, `lens`, `led`, `pcb`. Webots and glTF both read
+`baseColor` as linear. To tweak the look, edit the file, rerun `generate_proto.py` (Webots)
+and `build_rover_meshes.py` (GLB), rebuild `ugv_webots`. To check the result against the
+photos:
+
+```bash
+python3 src/ugv_main/ugv_webots/scripts/render_views.py \
+    --views docs/reference/comparisons/views.json --out /tmp/renders --detail high
+```
+
+renders the robot in a studio world from the camera poses of the reference photos
+(`views.json`, fitted to the photos by `fit_photo_views.py`). Comparisons are in
+`docs/reference/comparisons/`.
+
+**Detail levels.** `ros2 launch ugv_webots ugv_webots.launch.py detail:=low` (also on the
+SLAM and Nav2 wrappers) uses the URDF meshes, the previous look. The launch file writes a
+copy of the world with `detail "low"` next to it (`worlds/.<world>_low.wbt`). In your own
+world: `UgvRover { detail "low" }`. Physics, sensors and topics are the same in both.
 
 ## Drive and contact tuning
 
@@ -269,7 +373,24 @@ R2025a on Windows 11, all sensors active):
 
 The sensors (two 640x480 cameras and a 640x480 depth image at 20 Hz) dominate; rates scale
 with the RTF (for example `/scan` 8.8 to 9.0 Hz for a 10 Hz target). For more speed:
-`use_oak_points:=false`, `headless:=true`, or `mode:=fast`.
+`use_oak_points:=false`, `headless:=true`, or `mode:=fast`. `detail:=low` was not faster on our
+machine (table below); it may help where the GPU is very weak.
+
+**High detail model versus the previous model** (same machine, 60 s per run after a 15 s
+settle, three interleaved runs of each model; RTF from `/clock`, load time from the launch
+to the first `/clock`):
+
+| Scene | RTF before | RTF high detail | RTF low detail | Load before | Load high detail |
+|---|---|---|---|---|---|
+| Empty arena, headless | 0.773 | 0.854 | 0.893 | 2.8 s | 3.9 s |
+| Empty arena, Webots GUI | 0.818 | 0.882 | 0.911 | 4.8 s | 5.8 s |
+| Apartment, headless | 0.878 | 0.910 | 0.800 | 4.8 s | 5.7 s |
+| Apartment, Webots GUI | 0.911 | 0.893 (-2.0 %) | 0.746 | 6.5 s | 7.7 s |
+
+Run to run spread on this Windows host is large (standard deviation 0.03 to 0.18), so the
+differences in RTF are within the noise; the high detail model never cost more than 2 %.
+Loading takes about 1 s longer (the Collada files are read over `\\wsl$`). The low detail
+column runs the same visuals as before.
 
 **Gazebo comparison: not measured.** The upstream Gazebo Classic bringup did not start the
 robot in our WSL setup (first the `gazebo_ros2_control` and sensor plugins were missing until
@@ -314,9 +435,15 @@ Recorded results on 2026-10-16 (empty arena unless noted):
 
 ## Known gaps versus the real robot
 
-* **Four wheels, not six.** The URDF (and Gazebo) model four wheels. The real rover has six;
-  the asymmetric friction and `wheel_separation_multiplier` approximate its turning, but
+* **Four wheels, not six.** The URDF (and Gazebo) model four driven wheels. The real rover
+  has six; the two unpowered middle wheels are drawn but have no contact and do not spin.
+  The asymmetric friction and `wheel_separation_multiplier` approximate its turning, but
   slip on different floors is not modelled.
+* **No cables.** The STEP has no cables, so the camera and antenna cables are missing.
+* **Lidar self-hits.** With the high detail model the scan is blocked in 65 of 480 bins
+  (the old model: 102): the pan-tilt mast behind the lidar, and the two
+  antennas at the rear corners (about 4 degrees each, at 0.12 m), which the real LD19 also
+  sees. Self-hits are closer than `minRange` (0.2 m), so they read `inf`.
 * **No IMU and no EKF.** On the robot, `/odom` comes from `robot_localization` fusing the
   wheels with the IMU. In simulation `/odom` comes straight from `diff_drive_controller`
   and there is no `/imu/data`. Anything that needs the IMU will not work in simulation yet.

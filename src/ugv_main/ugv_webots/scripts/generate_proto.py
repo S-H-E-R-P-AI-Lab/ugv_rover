@@ -39,10 +39,14 @@ Pipeline:
      d. Wheels get contactMaterial "ugv_wheel" and realistic motor limits.
      e. Sensors are added: LD19 lidar, pan-tilt camera, OAK RGB camera and OAK
         depth (RangeFinder). Specs and frames follow ugv_gazebo and the real LD19.
+     f. Visual detail switch: the PROTO field `detail` selects the CAD meshes built by
+        build_rover_meshes.py ("high", Collada files in protos/meshes, the default) or
+        the inlined URDF meshes ("low"). Collisions and sensors are the same in both.
   4. Inertia sanity checks on the URDF values (printed, and the script fails on
      non physical tensors).
 """
 
+import json
 import math
 import os
 import re
@@ -59,6 +63,10 @@ from ugv_webots.description import upstream_urdf  # noqa: E402
 
 BUILD = os.path.join(HERE, '.build')
 OUTPUT = os.path.join(PKG, 'protos', 'UgvRover.proto')
+REPO = os.path.abspath(os.path.join(PKG, '..', '..', '..'))
+MESH_DIR = 'meshes'  # protos/meshes is a link to assets/3d/webots
+MANIFEST = os.path.join(PKG, 'protos', MESH_DIR, 'manifest.json')
+MATERIALS = os.path.join(REPO, 'assets', '3d', 'materials.json')
 URDF2PROTO = '/opt/ros/humble/lib/webots_ros2_importer/urdf2proto'
 
 # ---------------------------------------------------------------------------
@@ -129,6 +137,21 @@ DEVICES = {
 
 # DEF names must not start with a digit in VRML.
 DEF_RENAMES = {'3d_camera_link': 'oak_body'}
+
+# High detail visual of each URDF mesh (by its DEF name): the mesh in the manifest of
+# build_rover_meshes.py. The camera board is part of pt_link2, so pt_camera_link gets none.
+HIGH_DETAIL = {
+    'ugv_rover_base': 'base_link',
+    'base_lidar_link': 'base_lidar_link',
+    'oak_body': 'oak_base',
+    'pt_base_link': 'pt_base_link',
+    'pt_link1': 'pt_link1',
+    'pt_link2': 'pt_link2',
+    'pt_camera_link': None,
+    'wheel_link': 'wheel',
+}
+DETAIL_FIELD = ('  field  SFString{"high", "low"} detail "high"  '
+                '# Visual detail: "high" CAD meshes, "low" URDF meshes.\n')
 
 
 # ---------------------------------------------------------------------------
@@ -415,6 +438,86 @@ def solid_to_pose(text, solid):
     return text[:keyword] + 'Pose' + text[keyword + len('Solid'):]
 
 
+def detail_switch(text):
+    """Put every visual Shape in a template branch: URDF mesh for "low", CAD meshes else."""
+    if not os.path.exists(MANIFEST):
+        sys.exit(f'{MANIFEST} is missing: run build_rover_meshes.py (see docs/SIMULATOR.md).')
+    with open(MANIFEST) as f:
+        manifest = json.load(f)
+    with open(MATERIALS) as f:
+        materials = json.load(f)['materials']
+    defined = set()
+
+    def appearance(mat, textures):
+        name = f'ugv_{mat}'
+        if name in defined:
+            return f'appearance USE {name}'
+        defined.add(name)
+        m = materials[mat]
+        body = ['baseColor %g %g %g' % tuple(m['baseColor']),
+                'roughness %g' % m['roughness'], 'metalness %g' % m['metalness']]
+        if m.get('emissive'):
+            body.append('emissiveColor %g %g %g' % tuple(m['emissive']))
+        for field, key in (('baseColorMap', 'color'), ('normalMap', 'normal')):
+            if key in textures:
+                body.append(f'{field} ImageTexture {{\n  url [ "{MESH_DIR}/{textures[key]}" ]\n}}')
+        return f'appearance DEF {name} PBRAppearance {{\n' + indent('\n'.join(body), 2) + '\n}'
+
+    def shapes(link):
+        entry = manifest['links'][link]
+        out = []
+        for i, mat in enumerate(entry['materials']):
+            look = appearance(mat, entry.get('textures', {}).get(mat, {}))
+            url = f'{MESH_DIR}/{entry["file"]}'
+            out.append(f'Shape {{\n{indent(look, 2)}\n  geometry Mesh {{\n'
+                       f'    url [ "{url}" ]\n    materialIndex {i}\n  }}\n}}')
+        return out
+
+    def wheel(mirror):
+        if 'ugv_wheel_visual' in defined:
+            node = 'USE ugv_wheel_visual'
+        else:
+            defined.add('ugv_wheel_visual')
+            node = ('DEF ugv_wheel_visual Group {\n  children [\n' +
+                    indent('\n'.join(shapes('wheel')), 4) + '\n  ]\n}')
+        if not mirror:
+            return node
+        return 'Pose {\n  rotation 0 0 1 3.141593\n  children [\n' + indent(node, 4) + '\n  ]\n}'
+
+    # (start, end, replacement) for every visual Shape, built in file order (DEF before USE)
+    edits = []
+    for m in re.finditer(r'geometry (?:DEF|USE) (\w+)', text):
+        if m.group(1) not in HIGH_DETAIL:
+            continue
+        brace = enclosing_node_start(text, m.start())
+        start = text.rfind('Shape', 0, brace)
+        end = block_end(text, brace)
+        link = HIGH_DETAIL[m.group(1)]
+        if link is None:
+            high = []
+        elif link == 'wheel':
+            solid = re.compile(r'name "(\w+_wheel_link)"').search(text, end).group(1)
+            high = [wheel(solid.startswith('right'))]
+        else:
+            high = shapes(link)
+        if link == 'base_link':  # passive middle wheels, visual only
+            for name, xyz in sorted(manifest['links']['wheel']['middle_wheels'].items()):
+                high.append('Pose {\n  translation %g %g %g\n  children [\n' % tuple(xyz) +
+                            indent(wheel(name.startswith('right')), 4) + '\n  ]\n}')
+        pad = line_indent(text, start)
+        low = text[start:end]
+        block = ("%< if (fields.detail.value === 'low') { >%\n" + ' ' * pad + low + '\n' +
+                 ' ' * pad + '%< } else { >%\n' + indent('\n'.join(high), pad) + '\n' +
+                 ' ' * pad + '%< } >%')
+        edits.append((start, end, block))
+    for start, end, block in reversed(edits):
+        text = text[:start] + block + text[end:]
+    anchor = '  field  SFBool      selfCollision   FALSE       # Is `Robot.selfCollision`.\n'
+    if anchor not in text:
+        sys.exit('Unexpected urdf2webots header, update generate_proto.py')
+    return text.replace(anchor, anchor + DETAIL_FIELD)
+
+
 def main():
     os.makedirs(BUILD, exist_ok=True)
     urdf_text = upstream_urdf('ugv_rover')
@@ -557,6 +660,9 @@ def main():
                         'field  SFBool      supervisor      TRUE ')
     if 'controller      "<extern>"' not in text or 'supervisor      TRUE' not in text:
         sys.exit('Unexpected urdf2webots header, update generate_proto.py')
+
+    # ---- 3f. visual detail switch ----
+    text = detail_switch(text)
 
     with open(OUTPUT, 'w') as f:
         f.write(text)

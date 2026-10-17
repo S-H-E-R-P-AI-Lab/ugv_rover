@@ -17,6 +17,7 @@ PROTO UgvRover [
   field  SFBool      supervisor      TRUE        # Is `Robot.supervisor`.
   field  SFBool      synchronization TRUE        # Is `Robot.synchronization`.
   field  SFBool      selfCollision   FALSE       # Is `Robot.selfCollision`.
+  field  SFString{"high", "low"} detail "high"  # Visual detail: "high" CAD meshes, "low" URDF meshes.
 ]
 {
   Robot {
@@ -47,7 +48,7 @@ PROTO UgvRover [
           ]
         }
         Pose {
-          translation 0.0317 -0.00102 0.1385
+          translation 0.0398 0.0001 0.1485
           rotation 0.000000 0.000000 1.000000 1.570800
           children [
             Box {
@@ -56,7 +57,7 @@ PROTO UgvRover [
           ]
         }
         Pose {
-          translation 0.07381 0 0.102953
+          translation 0.0769 0 0.1131
           children [
             Box {
               size 0.017 0.091 0.028
@@ -64,7 +65,7 @@ PROTO UgvRover [
           ]
         }
         Pose {
-          translation -0.026818 0 0.1395
+          translation -0.021118 0 0.1491
           children [
             Box {
               size 0.064 0.042 0.037
@@ -76,16 +77,17 @@ PROTO UgvRover [
     physics Physics {
       density -1
       mass 2.335560
-      centerOfMass [ 0.000963 -0.000014 0.064888 ]
+      centerOfMass [ 0.001315 0.000001 0.065522 ]
       inertiaMatrix [
-        1.309743e-02 1.468303e-02 2.101135e-02
-        1.028755e-06 -4.955765e-05 2.453688e-06
+        1.329889e-02 1.490156e-02 2.102835e-02
+        -1.262814e-07 -1.355673e-04 -2.712915e-07
       ]
     }
     children [
       Pose {
         translation 0.000000 0.000000 0.081000
         children [
+          %< if (fields.detail.value === 'low') { >%
           Shape {
             appearance DEF silver PBRAppearance {
               baseColor 0.500000 0.500000 0.500000
@@ -100,8 +102,136 @@ PROTO UgvRover [
               creaseAngle 0.6
             }
           }
+          %< } else { >%
+          Shape {
+            appearance DEF ugv_anodized PBRAppearance {
+              baseColor 0.18 0.18 0.19
+              roughness 0.45
+              metalness 0.55
+            }
+            geometry Mesh {
+              url [ "meshes/base_link.dae" ]
+              materialIndex 0
+            }
+          }
+          Shape {
+            appearance DEF ugv_plastic PBRAppearance {
+              baseColor 0.04 0.04 0.042
+              roughness 0.45
+              metalness 0
+            }
+            geometry Mesh {
+              url [ "meshes/base_link.dae" ]
+              materialIndex 1
+            }
+          }
+          Shape {
+            appearance DEF ugv_steel PBRAppearance {
+              baseColor 0.8 0.8 0.8
+              roughness 0.22
+              metalness 1
+            }
+            geometry Mesh {
+              url [ "meshes/base_link.dae" ]
+              materialIndex 2
+            }
+          }
+          Shape {
+            appearance DEF ugv_gold PBRAppearance {
+              baseColor 1 0.78 0.35
+              roughness 0.3
+              metalness 1
+            }
+            geometry Mesh {
+              url [ "meshes/base_link.dae" ]
+              materialIndex 3
+            }
+          }
+          Shape {
+            appearance DEF ugv_lens PBRAppearance {
+              baseColor 0.01 0.01 0.012
+              roughness 0.05
+              metalness 0
+            }
+            geometry Mesh {
+              url [ "meshes/base_link.dae" ]
+              materialIndex 4
+            }
+          }
+          Shape {
+            appearance DEF ugv_led PBRAppearance {
+              baseColor 0.95 0.9 0.7
+              roughness 0.15
+              metalness 0
+              emissiveColor 0.55 0.48 0.3
+            }
+            geometry Mesh {
+              url [ "meshes/base_link.dae" ]
+              materialIndex 5
+            }
+          }
+          Shape {
+            appearance DEF ugv_pcb PBRAppearance {
+              baseColor 0.012 0.018 0.014
+              roughness 0.5
+              metalness 0
+            }
+            geometry Mesh {
+              url [ "meshes/base_link.dae" ]
+              materialIndex 6
+            }
+          }
           Pose {
-            translation 0.031700 -0.001020 0.040000
+            translation 0 0.0883 -0.0412
+            children [
+              DEF ugv_wheel_visual Group {
+                children [
+                  Shape {
+                    appearance DEF ugv_rubber PBRAppearance {
+                      baseColor 0.03 0.03 0.03
+                      roughness 0.9
+                      metalness 0
+                      baseColorMap ImageTexture {
+                        url [ "meshes/tire_color.png" ]
+                      }
+                      normalMap ImageTexture {
+                        url [ "meshes/tire_normal.png" ]
+                      }
+                    }
+                    geometry Mesh {
+                      url [ "meshes/wheel.dae" ]
+                      materialIndex 0
+                    }
+                  }
+                  Shape {
+                    appearance DEF ugv_hub PBRAppearance {
+                      baseColor 0.028 0.028 0.028
+                      roughness 0.5
+                      metalness 0
+                    }
+                    geometry Mesh {
+                      url [ "meshes/wheel.dae" ]
+                      materialIndex 1
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+          Pose {
+            translation 0 -0.0883 -0.0412
+            children [
+              Pose {
+                rotation 0 0 1 3.141593
+                children [
+                  USE ugv_wheel_visual
+                ]
+              }
+            ]
+          }
+          %< } >%
+          Pose {
+            translation 0.039800 0.000100 0.050000
             rotation 0.000000 0.000000 1.000000 1.570800
             children [
               Lidar {
@@ -118,6 +248,7 @@ PROTO UgvRover [
                 defaultFrequency 10
                 type "fixed"
               }
+              %< if (fields.detail.value === 'low') { >%
               Shape {
                 appearance USE silver
                 geometry DEF base_lidar_link IndexedFaceSet {
@@ -128,10 +259,19 @@ PROTO UgvRover [
                   creaseAngle 0.6
                 }
               }
+              %< } else { >%
+              Shape {
+                appearance USE ugv_plastic
+                geometry Mesh {
+                  url [ "meshes/base_lidar_link.dae" ]
+                  materialIndex 0
+                }
+              }
+              %< } >%
             ]
           }
           Pose {
-            translation 0.065310 0.000000 0.021953
+            translation 0.068400 0.000000 0.032100
             children [
               Camera {
                 name "oak_rgb"
@@ -151,6 +291,7 @@ PROTO UgvRover [
                 minRange 0.2
                 maxRange 8
               }
+              %< if (fields.detail.value === 'low') { >%
               Shape {
                 appearance USE silver
                 geometry DEF oak_body IndexedFaceSet {
@@ -161,14 +302,31 @@ PROTO UgvRover [
                   creaseAngle 0.6
                 }
               }
+              %< } else { >%
+              Shape {
+                appearance USE ugv_plastic
+                geometry Mesh {
+                  url [ "meshes/oak_base.dae" ]
+                  materialIndex 0
+                }
+              }
+              Shape {
+                appearance USE ugv_lens
+                geometry Mesh {
+                  url [ "meshes/oak_base.dae" ]
+                  materialIndex 1
+                }
+              }
+              %< } >%
             ]
           }
           Pose {
-            translation -0.025710 0.000000 0.040000
+            translation -0.020010 0.000000 0.049600
             children [
               Pose {
                 rotation 0.000000 0.000000 1.000000 3.141593
                 children [
+                  %< if (fields.detail.value === 'low') { >%
                   Shape {
                     appearance USE silver
                     geometry DEF pt_base_link IndexedFaceSet {
@@ -179,12 +337,35 @@ PROTO UgvRover [
                       creaseAngle 0.6
                     }
                   }
+                  %< } else { >%
+                  Shape {
+                    appearance USE ugv_anodized
+                    geometry Mesh {
+                      url [ "meshes/pt_base_link.dae" ]
+                      materialIndex 0
+                    }
+                  }
+                  Shape {
+                    appearance USE ugv_plastic
+                    geometry Mesh {
+                      url [ "meshes/pt_base_link.dae" ]
+                      materialIndex 1
+                    }
+                  }
+                  Shape {
+                    appearance USE ugv_steel
+                    geometry Mesh {
+                      url [ "meshes/pt_base_link.dae" ]
+                      materialIndex 2
+                    }
+                  }
+                  %< } >%
                 ]
               }
               HingeJoint {
                 jointParameters HingeJointParameters {
                   axis 0.000000 0.000000 1.000000
-                  anchor 0.011300 0.000000 0.038300
+                  anchor 0.011300 0.000000 0.047800
                 }
                 device [
                   RotationalMotor {
@@ -199,8 +380,9 @@ PROTO UgvRover [
                   }
                 ]
                 endPoint Solid {
-                  translation 0.011300 0.000000 0.038300
+                  translation 0.011300 0.000000 0.047800
                   children [
+                    %< if (fields.detail.value === 'low') { >%
                     Shape {
                       appearance USE silver
                       geometry DEF pt_link1 IndexedFaceSet {
@@ -211,6 +393,15 @@ PROTO UgvRover [
                         creaseAngle 0.6
                       }
                     }
+                    %< } else { >%
+                    Shape {
+                      appearance USE ugv_anodized
+                      geometry Mesh {
+                        url [ "meshes/pt_link1.dae" ]
+                        materialIndex 0
+                      }
+                    }
+                    %< } >%
                     HingeJoint {
                       jointParameters HingeJointParameters {
                         axis 0.000000 -1.000000 -0.000004
@@ -232,6 +423,7 @@ PROTO UgvRover [
                         translation 0.000000 0.020000 0.043003
                         rotation 1.000000 0.000000 0.000000 1.570800
                         children [
+                          %< if (fields.detail.value === 'low') { >%
                           Shape {
                             appearance USE silver
                             geometry DEF pt_link2 IndexedFaceSet {
@@ -242,6 +434,36 @@ PROTO UgvRover [
                               creaseAngle 0.6
                             }
                           }
+                          %< } else { >%
+                          Shape {
+                            appearance USE ugv_anodized
+                            geometry Mesh {
+                              url [ "meshes/pt_link2.dae" ]
+                              materialIndex 0
+                            }
+                          }
+                          Shape {
+                            appearance USE ugv_plastic
+                            geometry Mesh {
+                              url [ "meshes/pt_link2.dae" ]
+                              materialIndex 1
+                            }
+                          }
+                          Shape {
+                            appearance USE ugv_steel
+                            geometry Mesh {
+                              url [ "meshes/pt_link2.dae" ]
+                              materialIndex 2
+                            }
+                          }
+                          Shape {
+                            appearance USE ugv_pcb
+                            geometry Mesh {
+                              url [ "meshes/pt_link2.dae" ]
+                              materialIndex 3
+                            }
+                          }
+                          %< } >%
                           Pose {
                             translation 0.048400 -0.000569 0.020000
                             rotation -1.000000 0.000000 0.000000 1.570800
@@ -255,6 +477,7 @@ PROTO UgvRover [
                                 far 100
                                 noise 0.007
                               }
+                              %< if (fields.detail.value === 'low') { >%
                               Shape {
                                 appearance USE silver
                                 geometry DEF pt_camera_link IndexedFaceSet {
@@ -265,6 +488,9 @@ PROTO UgvRover [
                                   creaseAngle 0.6
                                 }
                               }
+                              %< } else { >%
+
+                              %< } >%
                             ]
                           }
                         ]
@@ -346,6 +572,7 @@ PROTO UgvRover [
             endPoint Solid {
               translation 0.085500 0.087250 -0.041212
               children [
+                %< if (fields.detail.value === 'low') { >%
                 Shape {
                   appearance USE silver
                   geometry DEF wheel_link IndexedFaceSet {
@@ -356,6 +583,9 @@ PROTO UgvRover [
                     creaseAngle 0.6
                   }
                 }
+                %< } else { >%
+                USE ugv_wheel_visual
+                %< } >%
               ]
               name "left_up_wheel_link"
               contactMaterial "ugv_wheel"
@@ -397,10 +627,14 @@ PROTO UgvRover [
             endPoint Solid {
               translation -0.085500 0.087250 -0.041212
               children [
+                %< if (fields.detail.value === 'low') { >%
                 Shape {
                   appearance USE silver
                   geometry USE wheel_link
                 }
+                %< } else { >%
+                USE ugv_wheel_visual
+                %< } >%
               ]
               name "left_down_wheel_link"
               contactMaterial "ugv_wheel"
@@ -442,10 +676,19 @@ PROTO UgvRover [
             endPoint Solid {
               translation 0.085500 -0.087250 -0.041212
               children [
+                %< if (fields.detail.value === 'low') { >%
                 Shape {
                   appearance USE silver
                   geometry USE wheel_link
                 }
+                %< } else { >%
+                Pose {
+                  rotation 0 0 1 3.141593
+                  children [
+                    USE ugv_wheel_visual
+                  ]
+                }
+                %< } >%
               ]
               name "right_up_wheel_link"
               contactMaterial "ugv_wheel"
@@ -487,10 +730,19 @@ PROTO UgvRover [
             endPoint Solid {
               translation -0.085500 -0.087250 -0.041212
               children [
+                %< if (fields.detail.value === 'low') { >%
                 Shape {
                   appearance USE silver
                   geometry USE wheel_link
                 }
+                %< } else { >%
+                Pose {
+                  rotation 0 0 1 3.141593
+                  children [
+                    USE ugv_wheel_visual
+                  ]
+                }
+                %< } >%
               ]
               name "right_down_wheel_link"
               contactMaterial "ugv_wheel"

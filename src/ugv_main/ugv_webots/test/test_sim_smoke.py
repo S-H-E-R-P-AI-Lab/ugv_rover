@@ -24,9 +24,9 @@ shutdown it checks that no Webots process is left behind.
 
 The test needs Webots. It is skipped when Webots cannot be found
 (WEBOTS_HOME, /usr/local/webots or webots on the PATH). UGV_SIM_TEST=0 skips
-it, UGV_SIM_TEST=1 runs it even if Webots was not found. Set
-UGV_TEST_ARTIFACTS to a directory to get a JSON summary and the last camera
-frames there.
+it, UGV_SIM_TEST=1 runs it even if Webots was not found. UGV_SIM_DETAIL=low
+uses the low detail robot visuals (default high). Set UGV_TEST_ARTIFACTS to a
+directory to get a JSON summary and the last camera frames there.
 """
 
 import json
@@ -131,6 +131,7 @@ def generate_test_description():
             'world': 'empty_arena.wbt',
             'headless': 'true',
             'use_rviz': 'false',
+            'detail': os.environ.get('UGV_SIM_DETAIL', 'high'),
         }.items())
     return launch.LaunchDescription([sim, launch_testing.actions.ReadyToTest()])
 

@@ -17,15 +17,41 @@
 <xacro:arg name="add_depth_camera" default="false"/>
 <xacro:property name="add_depth_camera" value="$(arg add_depth_camera)"/>
 
+<!-- kit: "jetson_orin" (default) places the deck sensors and the pan-tilt as on the
+     UGV Rover PT Jetson Orin ROS2 Kit, measured on Waveshare's STEP model
+     (docs/MODEL_CHANGES.md). "upstream" keeps Waveshare's original values. The
+     default comes from the UGV_KIT environment variable, like UGV_MODEL. -->
+<xacro:arg name="kit" default="$(optenv UGV_KIT jetson_orin)"/>
+<xacro:property name="kit" value="$(arg kit)"/>
+<xacro:unless value="${kit in ['jetson_orin', 'upstream']}">
+<!-- Fails with "unknown macro name" naming the allowed values. -->
+<xacro:error_kit_must_be_jetson_orin_or_upstream/>
+</xacro:unless>
+
 <xacro:arg name="robot_namespace" default="/" />
 <xacro:arg name="urdf_extras" default="empty.urdf" />
 
 <xacro:include filename="$(find ugv_description)/urdf/materials.xacro" />
 <xacro:include filename="$(find ugv_description)/urdf/wheels/rover_wheel.xacro" />
 <xacro:include filename="$(find ugv_description)/urdf/sensors/lidar.xacro" />
+<xacro:if value="${kit == 'upstream'}">
 <xacro:property name="lidar_joint_pose">
   <origin xyz="0.03170 -0.00102 0.04" rpy="0 0 1.5708"/>
 </xacro:property>
+<xacro:property name="oak_joint_pose">
+  <origin xyz="0.06531 0 0.021953" rpy="0 0 0" />
+</xacro:property>
+<xacro:property name="pt_pose" value="${dict(x=-0.02571, z=0.04, pan_z=0.0383)}"/>
+</xacro:if>
+<xacro:unless value="${kit == 'upstream'}">
+<xacro:property name="lidar_joint_pose">
+  <origin xyz="0.0398 0.0001 0.0500" rpy="0 0 1.5708"/>
+</xacro:property>
+<xacro:property name="oak_joint_pose">
+  <origin xyz="0.0684 0 0.0321" rpy="0 0 0" />
+</xacro:property>
+<xacro:property name="pt_pose" value="${dict(x=-0.02001, z=0.0496, pan_z=0.0478)}"/>
+</xacro:unless>
 <xacro:lidar> 
 <xacro:insert_block name="lidar_joint_pose" />
 </xacro:lidar>
@@ -33,13 +59,13 @@
 <xacro:unless value="${add_depth_camera}">
 <xacro:include filename="$(find ugv_description)/urdf/sensors/3d_camera.xacro" />
 <xacro:oak use_gazebo="$(arg use_gazebo)">
-  <origin xyz="0.06531 0 0.021953" rpy="0 0 0" />
+<xacro:insert_block name="oak_joint_pose" />
 </xacro:oak>
 </xacro:unless>
 
 <xacro:if value="${add_pt}">
 <xacro:include filename="$(find ugv_description)/urdf/sensors/pt.xacro"/>
-<xacro:pt use_gazebo="$(arg use_gazebo)" GZ_VERSION="$(arg GZ_VERSION)" pt_base_link_joint_pose_z="0.04" initial_positions_file="$(find ugv_description)/config/initial_positions.yaml"/>
+<xacro:pt use_gazebo="$(arg use_gazebo)" GZ_VERSION="$(arg GZ_VERSION)" pt_base_link_joint_pose_x="${pt_pose['x']}" pt_base_link_joint_pose_z="${pt_pose['z']}" pan_joint_pose_z="${pt_pose['pan_z']}" initial_positions_file="$(find ugv_description)/config/initial_positions.yaml"/>
 </xacro:if>
 
 <xacro:if value="${use_gazebo}">
