@@ -279,7 +279,9 @@ setup was out of scope.
 
 ## Checking the simulator
 
-Run after changing the model, the worlds, the controllers or after an upstream merge:
+Run after changing the model, the worlds, the controllers or after an upstream merge.
+The quick automated version is the sim smoke test (`colcon test --packages-select ugv_webots`,
+see [CI.md](CI.md)); the manual checks below go further:
 
 ```bash
 ros2 launch ugv_webots ugv_webots.launch.py world:=empty_arena.wbt headless:=true

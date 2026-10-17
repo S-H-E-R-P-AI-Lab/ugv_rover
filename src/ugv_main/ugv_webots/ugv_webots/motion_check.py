@@ -1,4 +1,19 @@
-"""Drive a fixed pattern and compare commanded motion, /odom and ground truth.
+# Copyright 2026 S-H-E-R-P-AI-Lab
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""
+Drive a fixed pattern and compare commanded motion, /odom and ground truth.
 
 Usage (with the simulation running):
     ros2 run ugv_webots motion_check
@@ -104,7 +119,8 @@ class MotionCheck(Node):
         angle = 2.0 * math.pi * self.turns * math.copysign(1.0, self.angular_speed)
         cmd = Twist()
         cmd.angular.z = math.copysign(abs(self.angular_speed), angle)
-        self.get_logger().info(f'Rotating {math.degrees(angle):.1f} deg at {cmd.angular.z:.2f} rad/s')
+        self.get_logger().info(
+            f'Rotating {math.degrees(angle):.1f} deg at {cmd.angular.z:.2f} rad/s')
         self.spin_for(abs(angle / self.angular_speed), cmd)
         self.spin_for(self.settle, stop)
         o2, t2 = self.odom.snapshot(), self.truth.snapshot()
@@ -123,11 +139,13 @@ class MotionCheck(Node):
         lines = [
             '',
             'Leg               commanded      /odom   ground truth   odom err   truth err',
-            f'forward [m]       {self.distance:9.3f}  {od:9.3f}  {td:13.3f}  {od - self.distance:+9.3f}  '
+            f'forward [m]       {self.distance:9.3f}  {od:9.3f}  {td:13.3f}  '
+            f'{od - self.distance:+9.3f}  '
             f'{td - self.distance:+10.3f}',
             f'lateral [m]       {0.0:9.3f}  {ol:9.3f}  {tl:13.3f}',
             f'heading drift [deg] {0.0:7.2f}  {oyaw1:9.2f}  {tyaw1:13.2f}',
-            f'rotation [deg]    {cmd_deg:9.1f}  {oyaw:9.1f}  {tyaw:13.1f}  {oyaw - cmd_deg:+9.1f}  '
+            f'rotation [deg]    {cmd_deg:9.1f}  {oyaw:9.1f}  {tyaw:13.1f}  '
+            f'{oyaw - cmd_deg:+9.1f}  '
             f'{tyaw - cmd_deg:+10.1f}',
             f'odom vs truth: forward {od - td:+.3f} m, rotation {oyaw - tyaw:+.1f} deg',
         ]

@@ -1,5 +1,7 @@
 # UGV Rover workspace (S-H-E-R-P AI Lab)
 
+[![CI](https://github.com/S-H-E-R-P-AI-Lab/ugv_rover/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/S-H-E-R-P-AI-Lab/ugv_rover/actions/workflows/ci.yml)
+
 ROS 2 Humble workspace for the **Waveshare UGV Rover** (6-wheel skid steer, LD19 lidar,
 pan-tilt USB camera, OAK-D depth camera), with a **Webots simulator** that behaves like the
 real robot.
@@ -50,6 +52,7 @@ Details: [docs/SIMULATOR.md](docs/SIMULATOR.md).
 | [docs/setup/](docs/setup/) | Installation per operating system |
 | [docs/SIMULATOR.md](docs/SIMULATOR.md) | How the Webots simulation works, topics and frames, adding worlds, tuning, known gaps |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Problems we hit and how to fix them |
+| [docs/CI.md](docs/CI.md) | What GitHub Actions checks on each pull request, running the checks locally |
 | [docs/UPSTREAM_CHANGES.md](docs/UPSTREAM_CHANGES.md) | What we changed in Waveshare's files, and how to sync with upstream |
 | [docs/UPSTREAM_README.md](docs/UPSTREAM_README.md) | Waveshare's original README, and from there their tutorials for the real robot (bringup, mapping, navigation, vision, web app) |
 

@@ -1,4 +1,19 @@
-"""Find the address of the machine running Webots when ROS runs in WSL or a VM.
+# Copyright 2026 S-H-E-R-P-AI-Lab
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""
+Find the address of the machine running Webots when ROS runs in WSL or a VM.
 
 webots_ros2 2025.0.0 (the Humble release) connects the robot controller to
 Windows Webots at the first "nameserver" of /etc/resolv.conf. Recent WSL
@@ -26,7 +41,8 @@ def wsl_networking_mode():
     """Return 'nat', 'mirrored', ... or None if it cannot be determined."""
     if shutil.which('wslinfo'):
         try:
-            out = subprocess.run(['wslinfo', '--networking-mode'], capture_output=True, text=True, timeout=5)
+            out = subprocess.run(['wslinfo', '--networking-mode'],
+                                 capture_output=True, text=True, timeout=5)
             mode = out.stdout.strip().lower()
             if mode:
                 return mode
@@ -37,7 +53,8 @@ def wsl_networking_mode():
 
 def default_gateway():
     try:
-        out = subprocess.run(['ip', 'route', 'show', 'default'], capture_output=True, text=True, timeout=5)
+        out = subprocess.run(['ip', 'route', 'show', 'default'],
+                             capture_output=True, text=True, timeout=5)
     except (OSError, subprocess.SubprocessError):
         return None
     for line in out.stdout.splitlines():

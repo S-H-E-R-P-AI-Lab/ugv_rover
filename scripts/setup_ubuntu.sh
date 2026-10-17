@@ -10,6 +10,7 @@
 # Options:
 #   --no-build     install everything but do not run colcon build
 #   --no-upgrade   skip "apt-get upgrade"
+#   --no-lfs       do not download the Git LFS model files (CI does not need them to build)
 
 set -euo pipefail
 
@@ -17,10 +18,12 @@ WS="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BASHRC="$HOME/.bashrc"
 DO_BUILD=1
 DO_UPGRADE=1
+DO_LFS=1
 for arg in "$@"; do
   case "$arg" in
     --no-build) DO_BUILD=0 ;;
     --no-upgrade) DO_UPGRADE=0 ;;
+    --no-lfs) DO_LFS=0 ;;
     *) echo "Unknown option: $arg" >&2; exit 2 ;;
   esac
 done
@@ -59,8 +62,10 @@ sudo add-apt-repository -y universe >/dev/null
 # ---------------------------------------------------------------------------
 step "ROS 2 apt repository (ros2-apt-source)"
 if ! dpkg -s ros2-apt-source >/dev/null 2>&1; then
-  version=$(curl -fsSL https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest \
-            | grep -F '"tag_name"' | awk -F'"' '{print $4}')
+  # Follow the releases/latest redirect instead of the GitHub API (rate limited per IP).
+  version=$(curl -fsSLI -o /dev/null -w '%{url_effective}' \
+            https://github.com/ros-infrastructure/ros-apt-source/releases/latest)
+  version=${version##*/}
   curl -fsSL -o /tmp/ros2-apt-source.deb \
     "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${version}/ros2-apt-source_${version}.$(. /etc/os-release && echo "$VERSION_CODENAME")_all.deb"
   sudo dpkg -i /tmp/ros2-apt-source.deb >/dev/null
@@ -77,6 +82,8 @@ fi
 # ---------------------------------------------------------------------------
 step "Installing ROS 2 Humble and the packages this repo uses (this takes a while)"
 # Same list as build_first.sh, plus the Webots simulator support.
+# The log is written as the user on purpose (SC2024).
+# shellcheck disable=SC2024
 sudo apt-get install -y -q \
   git-lfs python3-pip python3-rosdep python3-vcstool python3-colcon-common-extensions \
   python3-colcon-argcomplete ros-dev-tools \
@@ -95,15 +102,23 @@ echo "ROS 2 $(dpkg-query -W -f='${Version}' ros-humble-desktop) and webots_ros2 
 
 # ---------------------------------------------------------------------------
 step "Git LFS model files"
-git lfs install >/dev/null
-( cd "$WS" && git lfs pull )
-pointers=0
-while IFS= read -r f; do
-  if [ -f "$WS/$f" ] && head -c 200 "$WS/$f" | grep -q 'git-lfs.github.com/spec'; then
-    echo "  still a pointer: $f"; pointers=$((pointers + 1))
+if [ "$DO_LFS" = 1 ]; then
+  git lfs install >/dev/null
+  ( cd "$WS" && git lfs pull )
+  pointers=0
+  while IFS= read -r f; do
+    if [ -f "$WS/$f" ] && head -c 200 "$WS/$f" | grep -q 'git-lfs.github.com/spec'; then
+      echo "  still a pointer: $f"; pointers=$((pointers + 1))
+    fi
+  done < <(cd "$WS" && git lfs ls-files -n)
+  if [ "$pointers" = 0 ]; then
+    echo "All LFS files downloaded"
+  else
+    warn "$pointers LFS files are still pointers (see docs/TROUBLESHOOTING.md)"
   fi
-done < <(cd "$WS" && git lfs ls-files -n)
-[ "$pointers" = 0 ] && echo "All LFS files downloaded" || warn "$pointers LFS files are still pointers (see docs/TROUBLESHOOTING.md)"
+else
+  echo "Skipped (--no-lfs)"
+fi
 
 # ---------------------------------------------------------------------------
 step "rosdep"

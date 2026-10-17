@@ -1,4 +1,19 @@
-"""Measure the real-time factor of a running simulation from /clock.
+# Copyright 2026 S-H-E-R-P-AI-Lab
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""
+Measure the real-time factor of a running simulation from /clock.
 
 Usage:
     ros2 run ugv_webots rtf_meter              # 20 s window
@@ -44,7 +59,8 @@ def main(args=None):
         (w0, s0), (w1, s1) = node.samples[0], node.samples[-1]
         rate = (len(node.samples) - 1) / (w1 - w0)
         node.get_logger().info(
-            f'sim time {s1 - s0:.2f} s in wall time {w1 - w0:.2f} s: real-time factor {(s1 - s0) / (w1 - w0):.3f} '
+            f'sim time {s1 - s0:.2f} s in wall time {w1 - w0:.2f} s: '
+            f'real-time factor {(s1 - s0) / (w1 - w0):.3f} '
             f'(/clock at {rate:.0f} Hz)')
     node.destroy_node()
     if rclpy.ok():
