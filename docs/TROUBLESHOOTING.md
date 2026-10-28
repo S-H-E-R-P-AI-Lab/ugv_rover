@@ -15,6 +15,20 @@ ros2 control list_controllers # three controllers, all "active"
 
 ## Setup and build
 
+### `git clone` fails with `Authentication failed` or `Support for password authentication was removed` **(seen)**
+GitHub no longer accepts account passwords for Git operations over HTTPS. The easiest way to clone without having to create and configure SSH keys is to authenticate with the GitHub CLI (`gh`):
+
+```bash
+sudo apt update && sudo apt install -y gh
+gh auth login
+```
+
+Choose **GitHub.com**, **HTTPS**, **Yes** to authenticate Git credentials, and **Login with a web browser**. Open [https://github.com/login/device](https://github.com/login/device), paste the one-time code and authorize. Then clone with:
+
+```bash
+gh repo clone S-H-E-R-P-AI-Lab/ugv_rover ~/ugv_rover
+```
+
 ### "Unable to locate package ros-humble-..." or ROS installs as Jazzy **(seen)**
 ROS 2 Humble only exists for **Ubuntu 22.04**. Check with `lsb_release -a`. Our first WSL
 machine had Ubuntu 24.04 (default for `wsl --install`). Install a 22.04 distro next to it:

@@ -82,17 +82,42 @@ R2025a is the current stable release and the version matching our `webots_ros2` 
 
 ## 4. Get the code and install everything
 
-Open **Ubuntu 22.04** and run, one line at a time:
+Open **Ubuntu 22.04** and run:
 
 ```bash
-sudo apt update && sudo apt install -y git git-lfs
+sudo apt update && sudo apt install -y git git-lfs gh
 git lfs install
 git config --global core.autocrlf input
+```
+
+### GitHub authentication (GitHub CLI)
+
+Authenticate with GitHub so you can clone the repository without having to configure SSH keys:
+
+```bash
+gh auth login
+```
+
+Choose the default options:
+* **What account do you want to log into?** `GitHub.com`
+* **What is your preferred protocol for Git operations?** `HTTPS`
+* **Authenticate Git with your GitHub credentials?** `Yes`
+* **How would you like to authenticate GitHub CLI?** `Login with a web browser`
+
+Copy the 8-character one-time code shown in the terminal, press Enter to open your browser (or go to [https://github.com/login/device](https://github.com/login/device) on Windows), paste the code, and authorize.
+
+*(Note: If `apt install gh` cannot find the package, ensure Ubuntu's universe repository is enabled with `sudo add-apt-repository -y universe && sudo apt update`, or follow the [official GitHub CLI install instructions](https://github.com/cli/cli/blob/trunk/docs/install_linux.md).)*
+
+### Clone and run setup
+
+```bash
 cd ~
-git clone https://github.com/S-H-E-R-P-AI-Lab/ugv_rover.git
+gh repo clone S-H-E-R-P-AI-Lab/ugv_rover
 cd ugv_rover
 bash scripts/setup_ubuntu.sh
 ```
+
+*(You can also use `git clone https://github.com/S-H-E-R-P-AI-Lab/ugv_rover.git`—`gh auth login` configures Git credentials automatically.)*
 
 Important: clone into your Linux home (`~`), **not** into `/mnt/c/...`. The Windows drive
 is very slow from Linux and breaks file permissions.

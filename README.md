@@ -24,8 +24,9 @@ New to ROS? Read the [ROS 2 primer](docs/ROS2_PRIMER.md) first (15 minutes).
 In short, on Ubuntu 22.04 (or in WSL or the Mac's VM), with Webots R2025a installed:
 
 ```bash
-sudo apt update && sudo apt install -y git git-lfs && git lfs install
-git clone https://github.com/S-H-E-R-P-AI-Lab/ugv_rover.git ~/ugv_rover
+sudo apt update && sudo apt install -y git git-lfs gh && git lfs install
+gh auth login                                                      # authenticate via browser
+gh repo clone S-H-E-R-P-AI-Lab/ugv_rover ~/ugv_rover               # or git clone https://...
 cd ~/ugv_rover && bash scripts/setup_ubuntu.sh
 # open a new terminal, then:
 ros2 launch ugv_webots ugv_webots.launch.py use_rviz:=true

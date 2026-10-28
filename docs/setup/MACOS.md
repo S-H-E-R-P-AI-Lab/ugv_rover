@@ -98,10 +98,11 @@ The format is `<path on the Mac>:<path in the VM>`.
 ## 5. Get the code and install everything (in the VM)
 
 ```bash
-sudo apt update && sudo apt install -y git git-lfs
+sudo apt update && sudo apt install -y git git-lfs gh
 git lfs install
+gh auth login                                                # authenticate with GitHub (HTTPS)
 cd ~
-git clone https://github.com/S-H-E-R-P-AI-Lab/ugv_rover.git
+gh repo clone S-H-E-R-P-AI-Lab/ugv_rover
 cd ugv_rover
 bash scripts/setup_ubuntu.sh
 ```

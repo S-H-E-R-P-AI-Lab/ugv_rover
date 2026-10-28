@@ -35,10 +35,11 @@ elsewhere (tarball or snap), add `export WEBOTS_HOME=/path/to/webots` to `~/.bas
 ## 3. Get the code and install everything
 
 ```bash
-sudo apt update && sudo apt install -y git git-lfs
+sudo apt update && sudo apt install -y git git-lfs gh
 git lfs install
+gh auth login                                                # authenticate with GitHub (HTTPS)
 cd ~
-git clone https://github.com/S-H-E-R-P-AI-Lab/ugv_rover.git
+gh repo clone S-H-E-R-P-AI-Lab/ugv_rover
 cd ugv_rover
 bash scripts/setup_ubuntu.sh
 ```

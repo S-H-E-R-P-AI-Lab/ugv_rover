@@ -85,7 +85,7 @@ step "Installing ROS 2 Humble and the packages this repo uses (this takes a whil
 # The log is written as the user on purpose (SC2024).
 # shellcheck disable=SC2024
 sudo apt-get install -y -q \
-  git-lfs python3-pip python3-rosdep python3-vcstool python3-colcon-common-extensions \
+  gh git-lfs python3-pip python3-rosdep python3-vcstool python3-colcon-common-extensions \
   python3-colcon-argcomplete ros-dev-tools \
   ros-humble-desktop ros-humble-xacro ros-humble-joint-state-publisher ros-humble-joint-state-publisher-gui \
   ros-humble-ros2-control ros-humble-ros2-controllers \
